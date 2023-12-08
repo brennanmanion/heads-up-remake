@@ -17,21 +17,21 @@ public class ChatController {
 
     @ConnectMapping
     public void connect(@Headers Map<String, Object> headers) {
-        log.info("connect");
-        headers.forEach((key, value) -> log.info("connect header {} = {}", key, value));
+        System.out.println("connect");
+        headers.forEach((key, value) -> System.out.println("connect header {" + key + "} = {" + value + "}"));
         commonMessageSink.tryEmitNext("someone connected".getBytes());
     }
 
     @MessageMapping("chatSend")
     public void chatSend(byte[] messagePayload) {
         String message = new String(messagePayload);
-        log.info("'chatSend' route called: {}", message);
+        System.out.println("'chatSend' route called: {}" + message);
         commonMessageSink.tryEmitNext(("someone said: " + message).getBytes());
     }
 
     @MessageMapping("chatReceive")
     public Flux<byte[]> chatReceive() {
-        log.info("'chatReceive' route called");
+        System.out.println("'chatReceive' route called");
         return commonMessageSink.asFlux();
     }
 }

@@ -13,7 +13,7 @@ import java.util.stream.IntStream;
 public class SampleController {
     @MessageMapping("hello")
     public Flux<byte[]> responseStream(Flux<byte[]> rsMessageStream) {
-        log.info("'hello' route called");
+        System.out.println("'hello' route called");
         return rsMessageStream
                 .log()
                 .flatMap(rsMessage -> Flux.range(1, 2)

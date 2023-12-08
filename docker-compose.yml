@@ -1,0 +1,72 @@
+version: "3.8"
+services:
+  rsocketserver:
+    image: cabias/upwork_j1289b41f_rsocketserver
+    build:
+      context: rsocketserver/
+    container_name: upwork_j1289b41f_rsocketserver
+    ports:
+      - target: 8080
+        published: 8080
+        x-aws-protocol: tcp
+
+  rsockerclient:
+    image: cabias/upwork_j1289b41f_rsocketclient
+    build:
+      context: rsocketclient/
+    container_name: upwork_j1289b41f_rsocketclient
+    depends_on:
+      - rsocketserver
+    ports:
+      - target: 3000
+        published: 3000
+        x-aws-protocol: tcp
+
+x-aws-cloudformation:
+  Resources:
+    Rsockerclient3000TargetGroup:
+      Properties:
+        Port: 3000
+        Protocol: TCP
+        Tags:
+          - Key: com.docker.compose.project
+            Value: upwork-0136640b021289b41f-rsocket-client
+        TargetType: ip
+        VpcId: vpc-04eb98a8ca14c1de4
+      Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Rsocketserver8080TargetGroup:
+      Properties:
+        Port: 8080
+        Protocol: TCP
+        Tags:
+          - Key: com.docker.compose.project
+            Value: upwork-0136640b021289b41f-rsocket-client
+        TargetType: ip
+        VpcId: vpc-04eb98a8ca14c1de4
+      Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Rsockerclient3000Listener:
+      Properties:
+        DefaultActions:
+          - ForwardConfig:
+              TargetGroups:
+                - TargetGroupArn:
+                    Ref: Rsockerclient3000TargetGroup
+            Type: forward
+        LoadBalancerArn:
+          Ref: LoadBalancer
+        Port: 3000
+        Protocol: TCP
+      Type: AWS::ElasticLoadBalancingV2::Listener
+    Rsocketserver8080Listener:
+      Properties:
+        DefaultActions:
+          - ForwardConfig:
+              TargetGroups:
+                - TargetGroupArn:
+                    Ref: Rsocketserver8080TargetGroup
+            Type: forward
+        LoadBalancerArn:
+          Ref: LoadBalancer
+        Port: 8080
+        Protocol: TCP
+      Type: AWS::ElasticLoadBalancingV2::Listener

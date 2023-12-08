@@ -6,6 +6,7 @@ import FlowableConsumer from '../classes/FlowableConsumer';
 function ChatDemo(props) {
     const [message, setMessage] = useState('Hello everybody!');
     const [responses, setResponses] = useState([]);
+    const [prompt, setPrompt] = useState('');
 
     const rsocket = props.rsocket;
 
@@ -33,6 +34,21 @@ function ChatDemo(props) {
         });
     };
 
+    const chatRelease = () => {
+        const metadata = encodeRoute('chatRelease');
+        const message = 'someToken';
+
+        const consumer = new FlowableConsumer(resp => {
+            setPrompt(resp.toString());
+        });
+
+        const requestChannelSubscription = rsocket.requestStream({
+            data: Buffer.from(message),
+            metadata: metadata
+        });
+        requestChannelSubscription.subscribe(consumer);
+    }
+
     return (
         <Stack className="mx-auto" gap={3}>
             <Form.Label>My message</Form.Label>
@@ -40,6 +56,7 @@ function ChatDemo(props) {
             <Button variant="primary" onClick={() => sendMessage('chatSend')} disabled={rsocket === null}>Send chat message</Button>
             <div>Responses:</div>
             {responses.map((resp, i) => <div key={i}>{resp}</div>)}
+            <h1>{prompt}</h1>
         </Stack>
     );
 }

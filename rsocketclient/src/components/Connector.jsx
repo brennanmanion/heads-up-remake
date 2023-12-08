@@ -14,7 +14,9 @@ function Connector(props) {
     const setRSocket = props.setRSocket;
 
     const connect = () => {
-        const wsUrl = 'ws://' + window.location.hostname + ':6565/';
+        // const wsUrl = 'ws://' + window.location.hostname + ':6565/';
+        // const wsUrl = 'ws://' + window.location.hostname + ':8080/';
+        const wsUrl = 'wss://' + '87d6-66-186-201-150.ngrok-free.app';
         // const wsUrl = 'ws://' + '34.207.91.22' + ':8080/';
 
 

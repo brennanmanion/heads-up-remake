@@ -1,4 +1,5 @@
 import { Button } from 'react-bootstrap';
+import { useEffect} from 'react';
 
 import {
     APPLICATION_OCTET_STREAM,
@@ -81,12 +82,18 @@ function Connector(props) {
         setRSocket(null);
     };
 
+    useEffect(() => {
+        connect();
 
+        // Cleanup function to close the WebSocket connection
+        // when the component is unmounted
+        return () => {
+            disconnect();
+        };
+    }, []);
 
     return (
         <>
-            <Button variant="primary" onClick={connect} disabled={rsocket !== null}>Connect to RS server</Button>
-            <Button variant="secondary" onClick={disconnect} disabled={rsocket === null}>Disconnect from RS server</Button>
         </>
     );
 }

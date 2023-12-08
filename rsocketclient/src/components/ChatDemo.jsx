@@ -35,7 +35,6 @@ function ChatDemo(props) {
 
     return (
         <Stack className="mx-auto" gap={3}>
-            <Form.Label>My message</Form.Label>
             <Form.Control type="text" value={message} onChange={(e) => setMessage(e.target.value)} />
             <Button variant="primary" onClick={() => sendMessage('chatSend')} disabled={rsocket === null}>Send chat message</Button>
             <div>Responses:</div>

@@ -9,6 +9,7 @@ function ChatDemo(props) {
     const [prompt, setPrompt] = useState('');
 
     const rsocket = props.rsocket;
+    const fingerprint = props.fingerprint;
 
     useEffect(() => {
         if (rsocket !== null) {
@@ -37,7 +38,6 @@ function ChatDemo(props) {
     const chatRelease = () => {
         if (rsocket !== null) {
             const metadata = encodeRoute('chatRelease');
-            const visitorId = 'someId';
 
             const consumer = new FlowableConsumer(resp => {
                 setPrompt(resp.toString());
@@ -45,7 +45,7 @@ function ChatDemo(props) {
 
             const requestChannelSubscription = rsocket.requestStream({
                 metadata: metadata,
-                data: Buffer.from(visitorId)
+                data: Buffer.from(fingerprint)
             });
             requestChannelSubscription.subscribe(consumer);
         }

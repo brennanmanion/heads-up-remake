@@ -9,10 +9,28 @@ import {
     RSocketClient
 } from 'rsocket-core';
 import RSocketWebSocketClient from 'rsocket-websocket-client';
+import FingerprintJS from '@fingerprintjs/fingerprintjs';
 
 function Connector(props) {
     const rsocket = props.rsocket;
     const setRSocket = props.setRSocket;
+    const setFingerprint = props.setFingerprint;
+
+
+    useEffect(() => {
+        // Initialize FingerprintJS when the component is mounted
+        const getVisitorId = async () => {
+            try {
+                const fp = await FingerprintJS.load();
+                const result = await fp.get();
+                setFingerprint(result.visitorId);
+            } catch (error) {
+                console.error("Error loading FingerprintJS", error);
+            }
+        };
+
+        getVisitorId();
+    }, []);
 
     const connect = () => {
         // const wsUrl = 'ws://' + window.location.hostname + ':6565/';

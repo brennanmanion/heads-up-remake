@@ -39,23 +39,15 @@ function ChatDemo(props) {
             const metadata = encodeRoute('chatRelease');
             const visitorId = 'someId';
 
-            // Requesting the stream from the server
-            const stream = rsocket.requestStream({
+            const consumer = new FlowableConsumer(resp => {
+                setPrompt(resp.toString());
+            });
+
+            const requestChannelSubscription = rsocket.requestStream({
                 metadata: metadata,
                 data: Buffer.from(visitorId)
             });
-    
-            // Subscribe to the stream
-            stream.subscribe({
-                onNext: (message) => {
-                    // Handle each incoming message
-                    setPrompt(message.data.toString());
-                },
-                onError: (error) => console.error(error),
-                onSubscribe: (subscription) => {
-                    subscription.request(1000); // Request a certain number of messages
-                }
-            });
+            requestChannelSubscription.subscribe(consumer);
         }
     };    
 

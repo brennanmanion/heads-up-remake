@@ -8,12 +8,13 @@ import './App.css';
 
 function App() {
   const [rsocket, setRSocket] = useState(null);
+  const [fingerprint, setFingerprint] = useState(null);
 
   return (
     <>
       <Stack className="col-md-5 mx-auto" gap={3}>
-        <Connector setRSocket={newRSocket => setRSocket(newRSocket)} rsocket={rsocket}></Connector>
-        <ChatDemo rsocket={rsocket}></ChatDemo>
+        <Connector setFingerprint={newFingerprint => setFingerprint(newFingerprint)} fingerprint={fingerprint} setRSocket={newRSocket => setRSocket(newRSocket)} rsocket={rsocket}></Connector>
+        <ChatDemo fingerprint={fingerprint} rsocket={rsocket}></ChatDemo>
       </Stack>
     </>
   );

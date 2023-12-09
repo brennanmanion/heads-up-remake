@@ -29,6 +29,7 @@ public class ChatController {
     public void chatSend(byte[] messagePayload) {
         String message = new String(messagePayload);
         System.out.println("'chatSend' route called: {}" + message);
+        messages.add(messagePayload);
         commonMessageSink.tryEmitNext(("someone said: " + message).getBytes());
     }
 

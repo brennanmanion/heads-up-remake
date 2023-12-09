@@ -35,19 +35,29 @@ function ChatDemo(props) {
     };
 
     const chatRelease = () => {
-        const metadata = encodeRoute('chatRelease');
-        const message = 'someToken';
+        if (rsocket !== null) {
+            const metadata = encodeRoute('chatRelease');
+            const visitorId = 'someId';
 
-        const consumer = new FlowableConsumer(resp => {
-            setPrompt(resp.toString());
-        });
-
-        const requestChannelSubscription = rsocket.requestStream({
-            data: Buffer.from(message),
-            metadata: metadata
-        });
-        requestChannelSubscription.subscribe(consumer);
-    }
+            // Requesting the stream from the server
+            const stream = rsocket.requestStream({
+                metadata: metadata,
+                data: Buffer.from(visitorId)
+            });
+    
+            // Subscribe to the stream
+            stream.subscribe({
+                onNext: (message) => {
+                    // Handle each incoming message
+                    setPrompt(message.data.toString());
+                },
+                onError: (error) => console.error(error),
+                onSubscribe: (subscription) => {
+                    subscription.request(1000); // Request a certain number of messages
+                }
+            });
+        }
+    };    
 
     return (
         <Stack className="mx-auto" gap={3}>
@@ -55,6 +65,7 @@ function ChatDemo(props) {
             <Button variant="primary" onClick={() => sendMessage('chatSend')} disabled={rsocket === null}>Send chat message</Button>
             <div>Responses:</div>
             {responses.map((resp, i) => <div key={i}>{resp}</div>)}
+            <Button variant="primary" onClick={() => chatRelease()} disabled={rsocket === null}>Release Chat Message</Button>
             <h1>{prompt}</h1>
         </Stack>
     );

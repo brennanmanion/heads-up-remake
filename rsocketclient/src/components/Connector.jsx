@@ -1,5 +1,5 @@
 import { Button } from 'react-bootstrap';
-import { useEffect} from 'react';
+import { useEffect, useState} from 'react';
 
 import {
     APPLICATION_OCTET_STREAM,
@@ -12,13 +12,51 @@ import RSocketWebSocketClient from 'rsocket-websocket-client';
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
 
 function Connector(props) {
+    const [isPermissionGranted, setIsPermissionGranted] = useState(false);
     const rsocket = props.rsocket;
     const setRSocket = props.setRSocket;
     const setFingerprint = props.setFingerprint;
+    const setAcceleration = props.setAcceleration;
 
+    const requestPermission = () => {
+        if (typeof DeviceMotionEvent.requestPermission === 'function') {
+            DeviceMotionEvent.requestPermission()
+                .then(permissionState => {
+                    if (permissionState === 'granted') {
+                        setIsPermissionGranted(true);
+                        window.addEventListener('devicemotion', handleMotionEvent);
+                    } else {
+                        alert('Device Motion Permission Denied');
+                    }
+                })
+                .catch(console.error);
+        } else {
+            setIsPermissionGranted(true);
+            window.addEventListener('devicemotion', handleMotionEvent);
+        }
+    };
+
+    const handleMotionEvent = (event) => {
+        const { x, y, z } = event.accelerationIncludingGravity;
+        const { alpha, beta, gamma } = event.rotationRate;
+
+        setAcceleration({ x, y, z });
+    };
 
     useEffect(() => {
-        // Initialize FingerprintJS when the component is mounted
+
+        if (isPermissionGranted) {
+            window.addEventListener('devicemotion', handleMotionEvent);
+        }
+
+        return () => {
+            if (isPermissionGranted) {
+                window.removeEventListener('devicemotion', handleMotionEvent);
+            }
+        };
+    }, []);
+
+    useEffect(() => {
         const getVisitorId = async () => {
             try {
                 const fp = await FingerprintJS.load();
@@ -111,8 +149,11 @@ function Connector(props) {
     }, []);
 
     return (
-        <>
-        </>
+        <div>
+            <h1>My App</h1>
+            <button onClick={requestPermission}>Enable Motion Detection</button>
+            {/* Rest of your component */}
+        </div>
     );
 }
 

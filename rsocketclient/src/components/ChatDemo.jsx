@@ -10,6 +10,7 @@ function ChatDemo(props) {
 
     const rsocket = props.rsocket;
     const fingerprint = props.fingerprint;
+    const acceleration = props.acceleration;
 
     useEffect(() => {
         if (rsocket !== null) {
@@ -51,6 +52,14 @@ function ChatDemo(props) {
         }
     };    
 
+    const panelAcceleration = (
+        <>
+            <p>Acceleration X: {acceleration.x.toFixed(2)}</p>
+            <p>Acceleration Y: {acceleration.y.toFixed(2)}</p>
+            <p>Acceleration Z: {acceleration.z.toFixed(2)}</p>
+        </>
+    );
+
     return (
         <Stack className="mx-auto" gap={3}>
             <Form.Control type="text" value={message} onChange={(e) => setMessage(e.target.value)} />
@@ -59,6 +68,7 @@ function ChatDemo(props) {
             {responses.map((resp, i) => <div key={i}>{resp}</div>)}
             <Button variant="primary" onClick={() => chatRelease()} disabled={rsocket === null}>Release Chat Message</Button>
             <h1>{prompt}</h1>
+            {panelAcceleration}
         </Stack>
     );
 }

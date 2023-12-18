@@ -1,7 +1,6 @@
 package com.cabias.upwork.j1289b41f.rsocketserver.service;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -18,6 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.cabias.upwork.j1289b41f.rsocketserver.component.OpenAIApiKeyComponent;
+import com.theokanning.openai.completion.CompletionRequest;
+import com.theokanning.openai.service.OpenAiService;
 
 @Service
 public class YourService {
@@ -29,7 +30,7 @@ public class YourService {
         this.apiKeyComponent = apiKeyComponent;
     }
     
-    public List<String> someMethod(final String input) {
+    public void someMethod() {
         String apiKey = apiKeyComponent.getApiKey();
         
         CloseableHttpClient httpClient = HttpClients.createDefault();
@@ -51,7 +52,7 @@ public class YourService {
         
         JSONObject roleUser = new JSONObject();
         roleUser.put("role", "user");
-        roleUser.put("content", "What words and phrases are similar to \"" + input + "\"");
+        roleUser.put("content", "What words and phrases are similar to \"stocks\"");
         jsonArray.put(roleUser);
                 
         try {
@@ -71,12 +72,11 @@ public class YourService {
             
             String[] itemsArray = content.split(",\\s*");
 
-            return Arrays.asList(itemsArray);
+            List<String> itemsList = Arrays.asList(itemsArray);
             
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return new ArrayList<>();
     }
 }
 

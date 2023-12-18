@@ -1,10 +1,16 @@
 package com.cabias.upwork.j1289b41f.rsocketserver.controller;
 
 import lombok.extern.slf4j.Slf4j;
+
+import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.Headers;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.rsocket.annotation.ConnectMapping;
 import org.springframework.stereotype.Controller;
+
+import com.cabias.upwork.j1289b41f.rsocketserver.service.YourService;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
@@ -18,6 +24,9 @@ public class ChatController {
     private final Sinks.Many<byte[]> commonMessageSink = Sinks.many().multicast().directBestEffort();
     private final List<byte[]> messages = new ArrayList<>();
     
+    @Autowired
+    private YourService yourService;
+    
     @ConnectMapping
     public void connect(@Headers Map<String, Object> headers) {
         System.out.println("connect");
@@ -28,9 +37,14 @@ public class ChatController {
     @MessageMapping("chatSend")
     public void chatSend(byte[] messagePayload) {
         String message = new String(messagePayload);
-        System.out.println("'chatSend' route called: {}" + message);
-        messages.add(messagePayload);
-        commonMessageSink.tryEmitNext(("someone said: " + message).getBytes());
+        JSONObject jsonObject = new JSONObject(message);
+        System.out.println("'chatSend' route called: " + jsonObject);
+        if(jsonObject != null && jsonObject.has("message") && jsonObject.get("message") instanceof String && !jsonObject.getString("message").isBlank())
+        {
+            messages.add(jsonObject.getString("message").getBytes());
+            commonMessageSink.tryEmitNext(("someone said: " + jsonObject.getString("message")).getBytes());
+            yourService.someMethod();
+        }
     }
 
     @MessageMapping("chatReceive")

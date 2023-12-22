@@ -5,3 +5,5 @@ spring:
     server:
       port: 8080
       transport: websocket
+openai:
+  apikey: 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

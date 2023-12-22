@@ -30,8 +30,7 @@ public class YourService {
     }
 
     public List<String> someMethod(final String input) {
-    	List<String> itemsList = new ArrayList<>();
-    			
+    	  List<String> itemsList = new ArrayList<>();
         String apiKey = apiKeyComponent.getApiKey();
         
         CloseableHttpClient httpClient = HttpClients.createDefault();
@@ -53,7 +52,8 @@ public class YourService {
         
         JSONObject roleUser = new JSONObject();
         roleUser.put("role", "user");
-        roleUser.put("content", "What words and phrases are similar to \"stocks\"");
+
+        roleUser.put("content", "What words and phrases are similar to \"" + input + "\"");
         jsonArray.put(roleUser);
                 
         try {

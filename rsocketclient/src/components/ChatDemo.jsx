@@ -27,11 +27,15 @@ function ChatDemo(props) {
         }
     }, [rsocket]);
 
-    const sendMessage = (route) => {
-        const metadata = encodeRoute(route);
+    const sendMessage = () => {
+        const metadata = encodeRoute('chatSend');
+
+        const obj = {};
+        obj['message'] = message;
+        obj['token'] = fingerprint;
 
         rsocket.fireAndForget({
-            data: Buffer.from(message),
+            data: Buffer.from(JSON.stringify(obj)),
             metadata: metadata
         });
     };
@@ -63,7 +67,7 @@ function ChatDemo(props) {
     return (
         <Stack className="mx-auto" gap={3}>
             <Form.Control type="text" value={message} onChange={(e) => setMessage(e.target.value)} />
-            <Button variant="primary" onClick={() => sendMessage('chatSend')} disabled={rsocket === null}>Send chat message</Button>
+            <Button variant="primary" onClick={() => sendMessage()} disabled={rsocket === null}>Send chat message</Button>
             <div>Responses:</div>
             {responses.map((resp, i) => <div key={i}>{resp}</div>)}
             <Button variant="primary" onClick={() => chatRelease()} disabled={rsocket === null}>Release Chat Message</Button>

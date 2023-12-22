@@ -28,8 +28,9 @@ public class YourService {
     public YourService(OpenAIApiKeyComponent apiKeyComponent) {
         this.apiKeyComponent = apiKeyComponent;
     }
-    
+
     public List<String> someMethod(final String input) {
+    	  List<String> itemsList = new ArrayList<>();
         String apiKey = apiKeyComponent.getApiKey();
         
         CloseableHttpClient httpClient = HttpClients.createDefault();
@@ -51,6 +52,7 @@ public class YourService {
         
         JSONObject roleUser = new JSONObject();
         roleUser.put("role", "user");
+
         roleUser.put("content", "What words and phrases are similar to \"" + input + "\"");
         jsonArray.put(roleUser);
                 
@@ -71,12 +73,11 @@ public class YourService {
             
             String[] itemsArray = content.split(",\\s*");
 
-            return Arrays.asList(itemsArray);
-            
+            itemsList.addAll(Arrays.asList(itemsArray));
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return new ArrayList<>();
+        return itemsList;
     }
 }
 

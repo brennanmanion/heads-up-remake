@@ -1,7 +1,6 @@
 package com.cabias.upwork.j1289b41f.rsocketserver.service;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -28,7 +27,7 @@ public class YourService {
     public YourService(OpenAIApiKeyComponent apiKeyComponent) {
         this.apiKeyComponent = apiKeyComponent;
     }
-    
+
     public List<String> someMethod(final String input) {
         String apiKey = apiKeyComponent.getApiKey();
         
@@ -51,6 +50,7 @@ public class YourService {
         
         JSONObject roleUser = new JSONObject();
         roleUser.put("role", "user");
+
         roleUser.put("content", "What words and phrases are similar to \"" + input + "\"");
         jsonArray.put(roleUser);
                 
@@ -71,12 +71,11 @@ public class YourService {
             
             String[] itemsArray = content.split(",\\s*");
 
-            return Arrays.asList(itemsArray);
-            
+            List<String> itemsList = Arrays.asList(itemsArray);
+            return Arrays.asList(itemsArray); 
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return new ArrayList<>();
     }
 }
 

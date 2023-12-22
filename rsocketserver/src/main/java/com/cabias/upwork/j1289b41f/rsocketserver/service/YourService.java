@@ -1,6 +1,7 @@
 package com.cabias.upwork.j1289b41f.rsocketserver.service;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -29,6 +30,7 @@ public class YourService {
     }
 
     public List<String> someMethod(final String input) {
+    	  List<String> itemsList = new ArrayList<>();
         String apiKey = apiKeyComponent.getApiKey();
         
         CloseableHttpClient httpClient = HttpClients.createDefault();
@@ -71,11 +73,11 @@ public class YourService {
             
             String[] itemsArray = content.split(",\\s*");
 
-            List<String> itemsList = Arrays.asList(itemsArray);
-            return Arrays.asList(itemsArray); 
+            itemsList.addAll(Arrays.asList(itemsArray));
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return itemsList;
     }
 }
 

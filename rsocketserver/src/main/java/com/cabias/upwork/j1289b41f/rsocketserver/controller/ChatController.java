@@ -36,14 +36,16 @@ public class ChatController {
 
     @MessageMapping("chatSend")
     public void chatSend(byte[] messagePayload) {
-        String message = new String(messagePayload);
-        JSONObject jsonObject = new JSONObject(message);
+        String obj = new String(messagePayload);
+        JSONObject jsonObject = new JSONObject(obj);
         System.out.println("'chatSend' route called: " + jsonObject);
         if(jsonObject != null && jsonObject.has("message") && jsonObject.get("message") instanceof String && !jsonObject.getString("message").isBlank())
         {
-            messages.add(jsonObject.getString("message").getBytes());
-            commonMessageSink.tryEmitNext(("someone said: " + jsonObject.getString("message")).getBytes());
-            yourService.someMethod();
+        	final byte[] msg = jsonObject.getString("message").getBytes(); 
+        	final String message = new String(msg);
+            messages.add(msg);
+            commonMessageSink.tryEmitNext(("someone said: " + message).getBytes());
+            yourService.someMethod(message);
         }
     }
 

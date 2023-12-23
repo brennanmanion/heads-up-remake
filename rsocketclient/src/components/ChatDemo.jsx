@@ -14,6 +14,26 @@ function ChatDemo(props) {
     const acceleration = props.acceleration;
     const lastCallTime = useRef(Date.now());
 
+    const [audioUnlocked, setAudioUnlocked] = useState(false);
+    const audioRef = useRef();
+
+    const unlockAudio = () => {
+        // Play and immediately pause the audio to unlock it
+        audioRef.current.play()
+            .then(() => {
+                audioRef.current.pause();
+                audioRef.current.currentTime = 0; // Reset audio to start
+                setAudioUnlocked(true);
+            })
+            .catch(error => console.log('Error unlocking the audio:', error));
+    };
+
+    const playAudio = () => {
+        if (audioUnlocked && audioRef.current) {
+            audioRef.current.play().catch(error => console.log('Error playing the audio:', error));
+        }
+    };
+
     useEffect(() => {
         if (rsocket !== null) {
             const metadata = encodeRoute('chatReceive');
@@ -40,10 +60,14 @@ function ChatDemo(props) {
             const now = Date.now();
             if (now - lastCallTime.current > throttleInterval) {
                 chatRelease(); // Call your server function
+                if (audioUnlocked)
+                {
+                    playAudio();
+                }
                 lastCallTime.current = now; // Update the last call time
             }
         }
-    }, [rsocket, acceleration]); // This effect runs whenever the acceleration state changes
+    }, [rsocket, acceleration, audioUnlocked, playAudio]); // This effect runs whenever the acceleration state changes
 
     const sendMessage = () => {
         const metadata = encodeRoute('chatSend');
@@ -102,6 +126,13 @@ function ChatDemo(props) {
         <Stack className="mx-auto" gap={3}>
             <Form.Control type="text" value={message} onChange={(e) => setMessage(e.target.value)} />
             <Button variant="primary" onClick={() => sendMessage()} disabled={rsocket === null}>Send chat message</Button>
+            <audio ref={audioRef} preload="auto">
+                <source src="https://cdn.pixabay.com/audio/2022/03/10/audio_8cdc56bad0.mp3" type="audio/mpeg" />
+                Your browser does not support the audio element.
+            </audio>
+            {!audioUnlocked && (
+                <button onClick={unlockAudio}>Unlock Audio</button>
+            )}
             <div>Responses:</div>
             {responses.map((resp, i) => <div key={i}>{resp}</div>)}
             <Button variant="primary" onClick={() => chatRelease()} disabled={rsocket === null}>Release Chat Message</Button>

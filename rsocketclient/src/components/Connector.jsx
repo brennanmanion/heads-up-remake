@@ -147,7 +147,6 @@ function Connector(props) {
             
         const obj = {};
         obj['fingerprint'] = visitorId;
-        console.log(fingerprint);
         rsocket.fireAndForget({
             data: Buffer.from(JSON.stringify(obj)),
             metadata: metadata

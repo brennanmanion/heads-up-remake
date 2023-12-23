@@ -25,7 +25,7 @@ import java.util.Map;
 public class ChatController {
     private final Sinks.Many<byte[]> commonMessageSink = Sinks.many().multicast().directBestEffort();
     private final List<byte[]> messages = new ArrayList<>();
-    private final HashMap<String, List<String>> outputs = new HashMap<>();
+    private final HashMap<String, List<String>> inputMap = new HashMap<>();
     private final HashMap<String, RSocketRequester> requesters = new HashMap<>();
     
     @Autowired
@@ -46,9 +46,9 @@ public class ChatController {
     	 if(jsonObject != null && jsonObject.has("fingerprint") && jsonObject.get("fingerprint") instanceof String && !jsonObject.getString("fingerprint").isBlank())
     	 {
     		 final String fingerprint = jsonObject.getString("fingerprint");
-    		 if (!outputs.containsKey(fingerprint))
+    		 if (!inputMap.containsKey(fingerprint))
     		 {
-    			 outputs.put(fingerprint, new ArrayList<>());
+    			 inputMap.put(fingerprint, new ArrayList<>());
     		 }
     	 }
 
@@ -65,7 +65,16 @@ public class ChatController {
         	final String message = new String(msg);
             messages.add(msg);
             commonMessageSink.tryEmitNext(("someone said: " + message).getBytes());
-            yourService.someMethod(message);
+            
+            if(jsonObject != null && jsonObject.has("fingerprint") && jsonObject.get("fingerprint") instanceof String && !jsonObject.getString("fingerprint").isBlank())
+            {
+            	final String fingerprint = jsonObject.getString("fingerprint");
+            	if (inputMap.containsKey(fingerprint))
+            	{
+            		inputMap.get(fingerprint).add(message);
+            	}
+            }
+//            yourService.someMethod(message);
         }
     }
 

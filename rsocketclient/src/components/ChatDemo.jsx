@@ -32,7 +32,7 @@ function ChatDemo(props) {
 
         const obj = {};
         obj['message'] = message;
-        obj['token'] = fingerprint;
+        obj['fingerprint'] = fingerprint;
 
         rsocket.fireAndForget({
             data: Buffer.from(JSON.stringify(obj)),

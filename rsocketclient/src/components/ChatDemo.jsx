@@ -27,6 +27,16 @@ function ChatDemo(props) {
         }
     }, [rsocket]);
 
+    useEffect(() => {
+        // Define the threshold for detecting downward motion
+        const downwardMotionThreshold = 6; // Adjust this value based on testing
+
+        // Check if the device is moving downwards
+        if (acceleration.z > downwardMotionThreshold) {
+            chatRelease();
+        }
+    }, [rsocket, acceleration]); // This effect runs whenever the acceleration state changes
+
     const sendMessage = () => {
         const metadata = encodeRoute('chatSend');
 

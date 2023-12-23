@@ -7,11 +7,12 @@ function ChatDemo(props) {
     const [message, setMessage] = useState('Hello everybody!');
     const [responses, setResponses] = useState([]);
     const [prompt, setPrompt] = useState('');
-    const [countdown, setCountdown] = useState('');
+    const [countdown, setCountdown] = useState(null);
 
     const rsocket = props.rsocket;
     const fingerprint = props.fingerprint;
     const acceleration = props.acceleration;
+    const beta = props.beta;
     const lastCallTime = useRef(Date.now());
 
     const [audioUnlocked, setAudioUnlocked] = useState(false);
@@ -51,12 +52,12 @@ function ChatDemo(props) {
 
     useEffect(() => {
         // Define the threshold for detecting downward motion
-        const downwardMotionThreshold = 6; // Adjust this value based on testing
+        const downwardMotionThreshold = 150; // Adjust this value based on testing
 
         const throttleInterval = 1000;
 
         // Check if the device is moving downwards
-        if (acceleration.z > downwardMotionThreshold) {
+        if (countdown && Math.abs(beta) > downwardMotionThreshold) {
             const now = Date.now();
             if (now - lastCallTime.current > throttleInterval) {
                 chatRelease(); // Call your server function
@@ -90,25 +91,32 @@ function ChatDemo(props) {
                 setPrompt(resp.toString());
             });
 
+            const obj = {};
+            obj['fingerprint'] = fingerprint;
+
             const requestChannelSubscription = rsocket.requestStream({
                 metadata: metadata,
-                data: Buffer.from(fingerprint)
+                data: Buffer.from(JSON.stringify(obj))
             });
             requestChannelSubscription.subscribe(consumer);
         }
     };  
     
     const startCountdown = () => {
+        chatRelease();
         if (rsocket !== null) {
             const metadata = encodeRoute('countdown');
 
             const consumer = new FlowableConsumer(resp => {
-                setCountdown(resp.toString() === '0' ? '' : resp.toString());
+                setCountdown(resp.toString() === '0' ? null : resp.toString());
             });
+
+            const obj = {};
+            obj['fingerprint'] = fingerprint;
 
             const requestChannelSubscription = rsocket.requestStream({
                 metadata: metadata,
-                data: Buffer.from(fingerprint)
+                data: Buffer.from(JSON.stringify(obj))
             });
             requestChannelSubscription.subscribe(consumer);
         }
@@ -119,27 +127,28 @@ function ChatDemo(props) {
             <p>Acceleration X: {acceleration.x.toFixed(2)}</p>
             <p>Acceleration Y: {acceleration.y.toFixed(2)}</p>
             <p>Acceleration Z: {acceleration.z.toFixed(2)}</p>
+            <p>Beta : {beta}</p>
         </>
     );
 
     return (
         <Stack className="mx-auto" gap={3}>
-            <Form.Control type="text" value={message} onChange={(e) => setMessage(e.target.value)} />
-            <Button variant="primary" onClick={() => sendMessage()} disabled={rsocket === null}>Send chat message</Button>
             <audio ref={audioRef} preload="auto">
-                <source src="https://cdn.pixabay.com/audio/2022/03/10/audio_8cdc56bad0.mp3" type="audio/mpeg" />
-                Your browser does not support the audio element.
+            <source src="https://cdn.pixabay.com/audio/2022/03/10/audio_8cdc56bad0.mp3" type="audio/mpeg" />
+            Your browser does not support the audio element.
             </audio>
-            {!audioUnlocked && (
-                <button onClick={unlockAudio}>Unlock Audio</button>
+            {!countdown && (
+            <>
+                <Form.Control type="text" value={message} onChange={(e) => setMessage(e.target.value)} />
+                <Button variant="primary" onClick={() => sendMessage()} disabled={rsocket === null}>Send chat message</Button>
+                {!audioUnlocked && (
+                    <button onClick={unlockAudio}>Unlock Audio</button>
+                )}
+                <Button variant="primary" onClick={() => startCountdown()} disabled={rsocket === null}>Start Countdown!</Button>
+            </>
             )}
-            <div>Responses:</div>
-            {responses.map((resp, i) => <div key={i}>{resp}</div>)}
-            <Button variant="primary" onClick={() => chatRelease()} disabled={rsocket === null}>Release Chat Message</Button>
-            <h1>{prompt}</h1>
-            {panelAcceleration}
-            <Button variant="primary" onClick={() => startCountdown()} disabled={rsocket === null}>Start Countdown!</Button>
             <h1>{countdown}</h1>
+            <h1>{prompt}</h1>
         </Stack>
     );
 }

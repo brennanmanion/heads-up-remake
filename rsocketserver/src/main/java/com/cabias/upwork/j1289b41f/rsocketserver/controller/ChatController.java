@@ -20,6 +20,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Controller
 @Slf4j
@@ -27,6 +30,7 @@ public class ChatController {
     private final Sinks.Many<byte[]> commonMessageSink = Sinks.many().multicast().directBestEffort();
     private final List<byte[]> messages = new ArrayList<>();
     private final HashMap<String, List<String>> inputMap = new HashMap<>();
+    private final ConcurrentHashMap<String, List<String>> outputMap = new ConcurrentHashMap<>();
     private final HashMap<String, RSocketRequester> requesters = new HashMap<>();
     
     @Autowired
@@ -50,6 +54,7 @@ public class ChatController {
     		 if (!inputMap.containsKey(fingerprint))
     		 {
     			 inputMap.put(fingerprint, new ArrayList<>());
+    			 outputMap.put(fingerprint, new ArrayList<>());
     		 }
     	 }
 
@@ -73,6 +78,11 @@ public class ChatController {
             	if (inputMap.containsKey(fingerprint))
             	{
             		inputMap.get(fingerprint).add(message);
+            	    HashMap<String, List<String>> resultMap = new HashMap<>();
+            	    if(inputMap.containsKey(fingerprint)) {
+            	        resultMap.put(fingerprint, inputMap.get(fingerprint));
+            	        CompletableFuture.runAsync(() -> yourService.processMap(resultMap, outputMap));
+            	    }
             	}
             }
 //            yourService.someMethod(message);
@@ -89,11 +99,24 @@ public class ChatController {
     public Flux<byte[]> chatRelease(byte[] messagePayload) {
         System.out.println("'chatRelease' route called");
         final List<byte[]> list = new ArrayList<>();
-        if (!messages.isEmpty())
+        
+        String obj = new String(messagePayload);
+        JSONObject jsonObject = new JSONObject(obj);
+        if(jsonObject != null && jsonObject.has("fingerprint") && jsonObject.get("fingerprint") instanceof String && !jsonObject.getString("fingerprint").isBlank())
         {
-        	list.add(messages.get(0));
-        	messages.remove(0);
+        	final String fingerprint = jsonObject.getString("fingerprint");
+        	if (outputMap.containsKey(fingerprint))
+        	{
+                if (!outputMap.get(fingerprint).isEmpty())
+                {    
+                	Random random = new Random();
+                	final int randomInt = random.nextInt(outputMap.get(fingerprint).size());
+                	list.add(outputMap.get(fingerprint).get(randomInt).getBytes());
+                	outputMap.get(fingerprint).remove(randomInt);
+                }	
+        	}	
         }
+        
         return Flux.fromIterable(list);
     }
     

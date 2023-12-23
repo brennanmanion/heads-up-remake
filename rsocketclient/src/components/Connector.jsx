@@ -19,6 +19,7 @@ function Connector(props) {
     const setRSocket = props.setRSocket;
     const setFingerprint = props.setFingerprint;
     const setAcceleration = props.setAcceleration;
+    const setBeta = props.setBeta;
 
     const requestPermission = () => {
         if (typeof DeviceMotionEvent.requestPermission === 'function') {
@@ -39,10 +40,13 @@ function Connector(props) {
     };
 
     const handleMotionEvent = (event) => {
-        const { x, y, z } = event.accelerationIncludingGravity;
-        const { alpha, beta, gamma } = event.rotationRate;
+        // const { x, y, z } = event.accelerationIncludingGravity;
+        const { x, y, z } = event.acceleration;
+        // const { alpha, beta, gamma } = event.rotationRate;
+        const beta = event.rotationRate.beta;
 
         setAcceleration({ x, y, z });
+        setBeta(beta);
     };
 
     useEffect(() => {
@@ -169,11 +173,15 @@ function Connector(props) {
     }, []);
 
     return (
-        <div>
-            <h1>My App</h1>
-            <button onClick={requestPermission}>Enable Motion Detection</button>
-            {/* Rest of your component */}
-        </div>
+        <>
+        {!isPermissionGranted && (
+            <>
+                <div>
+                <button onClick={requestPermission}>Enable Motion Detection</button>
+                </div>
+            </>
+        )}
+        </>
     );
 }
 

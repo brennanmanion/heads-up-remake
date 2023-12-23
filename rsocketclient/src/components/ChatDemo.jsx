@@ -28,21 +28,6 @@ function ChatDemo(props) {
     }, [rsocket]);
 
     useEffect(() => {
-        if (rsocket !== null) {
-            const metadata = encodeRoute('chatReceive');
-
-            const consumer = new FlowableConsumer(resp => {
-                setResponses(prevResponses => [...prevResponses, resp.toString()]);
-            });
-
-            const requestChannelSubscription = rsocket.requestStream({
-                metadata: metadata
-            });
-            requestChannelSubscription.subscribe(consumer);
-        }
-    }, [rsocket]);
-
-    useEffect(() => {
         // Define the threshold for detecting downward motion
         const downwardMotionThreshold = 6; // Adjust this value based on testing
 

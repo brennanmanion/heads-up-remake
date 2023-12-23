@@ -27,6 +27,31 @@ function ChatDemo(props) {
         }
     }, [rsocket]);
 
+    useEffect(() => {
+        if (rsocket !== null) {
+            const metadata = encodeRoute('chatReceive');
+
+            const consumer = new FlowableConsumer(resp => {
+                setResponses(prevResponses => [...prevResponses, resp.toString()]);
+            });
+
+            const requestChannelSubscription = rsocket.requestStream({
+                metadata: metadata
+            });
+            requestChannelSubscription.subscribe(consumer);
+        }
+    }, [rsocket]);
+
+    useEffect(() => {
+        // Define the threshold for detecting downward motion
+        const downwardMotionThreshold = 6; // Adjust this value based on testing
+
+        // Check if the device is moving downwards
+        if (acceleration.z > downwardMotionThreshold) {
+            chatRelease();
+        }
+    }, [rsocket, acceleration]); // This effect runs whenever the acceleration state changes
+
     const sendMessage = () => {
         const metadata = encodeRoute('chatSend');
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Button, Form, Stack } from 'react-bootstrap';
 import { encodeRoute } from 'rsocket-core';
 import FlowableConsumer from '../classes/FlowableConsumer';
@@ -12,6 +12,7 @@ function ChatDemo(props) {
     const rsocket = props.rsocket;
     const fingerprint = props.fingerprint;
     const acceleration = props.acceleration;
+    const lastCallTime = useRef(Date.now());
 
     useEffect(() => {
         if (rsocket !== null) {
@@ -32,9 +33,15 @@ function ChatDemo(props) {
         // Define the threshold for detecting downward motion
         const downwardMotionThreshold = 6; // Adjust this value based on testing
 
+        const throttleInterval = 1000;
+
         // Check if the device is moving downwards
         if (acceleration.z > downwardMotionThreshold) {
-            chatRelease();
+            const now = Date.now();
+            if (now - lastCallTime.current > throttleInterval) {
+                chatRelease(); // Call your server function
+                lastCallTime.current = now; // Update the last call time
+            }
         }
     }, [rsocket, acceleration]); // This effect runs whenever the acceleration state changes
 

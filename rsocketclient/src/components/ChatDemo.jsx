@@ -7,6 +7,7 @@ function ChatDemo(props) {
     const [message, setMessage] = useState('Hello everybody!');
     const [responses, setResponses] = useState([]);
     const [prompt, setPrompt] = useState('');
+    const [countdown, setCountdown] = useState('');
 
     const rsocket = props.rsocket;
     const fingerprint = props.fingerprint;
@@ -54,7 +55,23 @@ function ChatDemo(props) {
             });
             requestChannelSubscription.subscribe(consumer);
         }
-    };    
+    };  
+    
+    const startCountdown = () => {
+        if (rsocket !== null) {
+            const metadata = encodeRoute('countdown');
+
+            const consumer = new FlowableConsumer(resp => {
+                setCountdown(resp.toString() === '0' ? '' : resp.toString());
+            });
+
+            const requestChannelSubscription = rsocket.requestStream({
+                metadata: metadata,
+                data: Buffer.from(fingerprint)
+            });
+            requestChannelSubscription.subscribe(consumer);
+        }
+    };  
 
     const panelAcceleration = (
         <>
@@ -73,6 +90,8 @@ function ChatDemo(props) {
             <Button variant="primary" onClick={() => chatRelease()} disabled={rsocket === null}>Release Chat Message</Button>
             <h1>{prompt}</h1>
             {panelAcceleration}
+            <Button variant="primary" onClick={() => startCountdown()} disabled={rsocket === null}>Start Countdown!</Button>
+            <h1>{countdown}</h1>
         </Stack>
     );
 }

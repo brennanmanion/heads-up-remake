@@ -15,6 +15,7 @@ import com.cabias.upwork.j1289b41f.rsocketserver.service.YourService;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -94,5 +95,14 @@ public class ChatController {
         	messages.remove(0);
         }
         return Flux.fromIterable(list);
+    }
+    
+    @MessageMapping("countdown")
+    public Flux<byte[]> countdown(byte[] messagePayload) {
+        // Start at 60, decrement every second, take 61 elements (60 to 0 inclusive)
+        return Flux.interval(Duration.ofSeconds(1)) // Emits every second
+                    .map(tick -> 30 - tick) // Transform the tick to the countdown number
+                    .take(31) // Take 61 elements (from 60 to 0)
+                    .map(number -> String.valueOf(number).getBytes()); // Convert the number to a byte array
     }
 }

@@ -1,5 +1,6 @@
 import { Button } from 'react-bootstrap';
 import { useEffect, useState} from 'react';
+import { encodeRoute } from 'rsocket-core';
 
 import {
     APPLICATION_OCTET_STREAM,
@@ -14,6 +15,7 @@ import FingerprintJS from '@fingerprintjs/fingerprintjs';
 function Connector(props) {
     const [isPermissionGranted, setIsPermissionGranted] = useState(false);
     const rsocket = props.rsocket;
+    const fingerprint = props.fingerprint;
     const setRSocket = props.setRSocket;
     const setFingerprint = props.setFingerprint;
     const setAcceleration = props.setAcceleration;
@@ -56,21 +58,8 @@ function Connector(props) {
         };
     }, []);
 
-    useEffect(() => {
-        const getVisitorId = async () => {
-            try {
-                const fp = await FingerprintJS.load();
-                const result = await fp.get();
-                setFingerprint(result.visitorId);
-            } catch (error) {
-                console.error("Error loading FingerprintJS", error);
-            }
-        };
-
-        getVisitorId();
-    }, []);
-
     const connect = () => {
+        const visitorIdPromise = getVisitorId();
         // const wsUrl = 'ws://' + window.location.hostname + ':6565/';
         // const wsUrl = 'ws://' + window.location.hostname + ':8080/';
         const wsUrl = 'wss://' + '87d6-66-186-201-150.ngrok-free.app';
@@ -98,6 +87,7 @@ function Connector(props) {
                 metadata: IdentitySerializer
             },
             setup: {
+                payload: Buffer.from('test'),
                 dataMimeType: APPLICATION_OCTET_STREAM.string,
                 keepAlive: 10000, //ms
                 lifetime: 100000, //ms
@@ -118,9 +108,12 @@ function Connector(props) {
         //when connection is ready, onComplete is triggered and we finally get hold on "rsocket" instance - the one
         //we will use later to communicate with the server.
         connectionSubscription.subscribe({
-            onComplete: rsocket => {
+            onComplete: async (rsocket) => {
                 console.log('RSocketClient: connected');
-                setRSocket(rsocket)
+                setRSocket(rsocket);
+                const visitorId = await visitorIdPromise;
+                initMap(rsocket, visitorId);
+
             },
             onSubscribe: () => {
                 console.log('RSocketClient: onSubscribe');
@@ -138,8 +131,36 @@ function Connector(props) {
         setRSocket(null);
     };
 
+    const getVisitorId = async () => {
+        try {
+            const fp = await FingerprintJS.load();
+            const result = await fp.get();
+            setFingerprint(result.visitorId);
+            return result.visitorId; 
+        } catch (error) {
+            console.error("Error loading FingerprintJS", error);
+        }
+    };
+
+    const initMap = (rsocket, visitorId) => {
+        const metadata = encodeRoute('initMap');
+            
+        const obj = {};
+        obj['fingerprint'] = visitorId;
+        console.log(fingerprint);
+        rsocket.fireAndForget({
+            data: Buffer.from(JSON.stringify(obj)),
+            metadata: metadata
+        });
+    };
+
     useEffect(() => {
         connect();
+
+        if (rsocket != null)
+        {
+            initMap(rsocket);
+        }
 
         // Cleanup function to close the WebSocket connection
         // when the component is unmounted

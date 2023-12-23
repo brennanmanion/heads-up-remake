@@ -56,6 +56,15 @@ function ChatDemo(props) {
         }
     };    
 
+    const initMap = () => {
+        const metadata = encodeRoute('initMap');
+
+        rsocket.fireAndForget({
+            data: Buffer.from(fingerprint),
+            metadata: metadata
+        });
+    };
+
     const panelAcceleration = (
         <>
             <p>Acceleration X: {acceleration.x.toFixed(2)}</p>
@@ -70,7 +79,7 @@ function ChatDemo(props) {
             <Button variant="primary" onClick={() => sendMessage()} disabled={rsocket === null}>Send chat message</Button>
             <div>Responses:</div>
             {responses.map((resp, i) => <div key={i}>{resp}</div>)}
-            <Button variant="primary" onClick={() => chatRelease()} disabled={rsocket === null}>Release Chat Message</Button>
+            <Button variant="primary" onClick={() => initMap()} disabled={rsocket === null}>Release Chat Message</Button>
             <h1>{prompt}</h1>
             {panelAcceleration}
         </Stack>

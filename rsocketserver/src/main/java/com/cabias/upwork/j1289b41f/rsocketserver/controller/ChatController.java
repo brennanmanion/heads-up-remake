@@ -101,8 +101,8 @@ public class ChatController {
     public Flux<byte[]> countdown(byte[] messagePayload) {
         // Start at 60, decrement every second, take 61 elements (60 to 0 inclusive)
         return Flux.interval(Duration.ofSeconds(1)) // Emits every second
-                    .map(tick -> 30 - tick) // Transform the tick to the countdown number
-                    .take(31) // Take 61 elements (from 60 to 0)
+                    .map(tick -> 90 - tick) // Transform the tick to the countdown number
+                    .take(91) // Take 61 elements (from 60 to 0)
                     .map(number -> String.valueOf(number).getBytes()); // Convert the number to a byte array
     }
 }

@@ -49,6 +49,7 @@ function ChatDemo(props) {
             data: Buffer.from(JSON.stringify(obj)),
             metadata: metadata
         });
+        setMessage('');
     };
 
     const chatRelease = () => {
@@ -93,15 +94,22 @@ function ChatDemo(props) {
 
     return (
         <Stack className="mx-auto" gap={3}>
-            <Form.Control type="text" value={message} onChange={(e) => setMessage(e.target.value)} />
-            <Button variant="primary" onClick={() => sendMessage()} disabled={rsocket === null}>Send chat message</Button>
-            <div>Responses:</div>
-            {responses.map((resp, i) => <div key={i}>{resp}</div>)}
-            <Button variant="primary" onClick={() => chatRelease()} disabled={rsocket === null}>Release Chat Message</Button>
-            <h1>{prompt}</h1>
-            {panelAcceleration}
-            <Button variant="primary" onClick={() => startCountdown()} disabled={rsocket === null}>Start Countdown!</Button>
+            <audio ref={audioRef} preload="auto">
+            <source src="https://cdn.pixabay.com/audio/2022/03/10/audio_8cdc56bad0.mp3" type="audio/mpeg" />
+            Your browser does not support the audio element.
+            </audio>
+            {!countdown && (
+            <>
+                <Form.Control type="text" value={message} onChange={(e) => setMessage(e.target.value)} />
+                <Button variant="primary" onClick={() => sendMessage()} disabled={rsocket === null}>Send chat message</Button>
+                {!audioUnlocked && (
+                    <button onClick={unlockAudio}>Unlock Audio</button>
+                )}
+                <Button variant="primary" onClick={() => startCountdown()} disabled={rsocket === null}>Start Countdown!</Button>
+            </>
+            )}
             <h1>{countdown}</h1>
+            <h1 style={{ width: '100%', fontSize: '10vw' }}>{prompt}</h1>
         </Stack>
     );
 }

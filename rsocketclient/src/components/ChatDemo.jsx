@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Button, Form, Stack } from 'react-bootstrap';
 import { encodeRoute } from 'rsocket-core';
 import FlowableConsumer from '../classes/FlowableConsumer';
@@ -7,11 +7,33 @@ function ChatDemo(props) {
     const [message, setMessage] = useState('Hello everybody!');
     const [responses, setResponses] = useState([]);
     const [prompt, setPrompt] = useState('');
-    const [countdown, setCountdown] = useState('');
+    const [countdown, setCountdown] = useState(null);
 
     const rsocket = props.rsocket;
     const fingerprint = props.fingerprint;
     const acceleration = props.acceleration;
+    const beta = props.beta;
+    const lastCallTime = useRef(Date.now());
+
+    const [audioUnlocked, setAudioUnlocked] = useState(false);
+    const audioRef = useRef();
+
+    const unlockAudio = () => {
+        // Play and immediately pause the audio to unlock it
+        audioRef.current.play()
+            .then(() => {
+                audioRef.current.pause();
+                audioRef.current.currentTime = 0; // Reset audio to start
+                setAudioUnlocked(true);
+            })
+            .catch(error => console.log('Error unlocking the audio:', error));
+    };
+
+    const playAudio = () => {
+        if (audioUnlocked && audioRef.current) {
+            audioRef.current.play().catch(error => console.log('Error playing the audio:', error));
+        }
+    };
 
     useEffect(() => {
         if (rsocket !== null) {
@@ -30,13 +52,23 @@ function ChatDemo(props) {
 
     useEffect(() => {
         // Define the threshold for detecting downward motion
-        const downwardMotionThreshold = 6; // Adjust this value based on testing
+        const downwardMotionThreshold = 150; // Adjust this value based on testing
+
+        const throttleInterval = 1000;
 
         // Check if the device is moving downwards
-        if (acceleration.z > downwardMotionThreshold) {
-            chatRelease();
+        if (countdown && Math.abs(beta) > downwardMotionThreshold) {
+            const now = Date.now();
+            if (now - lastCallTime.current > throttleInterval) {
+                chatRelease(); // Call your server function
+                if (audioUnlocked)
+                {
+                    playAudio();
+                }
+                lastCallTime.current = now; // Update the last call time
+            }
         }
-    }, [rsocket, acceleration]); // This effect runs whenever the acceleration state changes
+    }, [rsocket, acceleration, audioUnlocked, playAudio]); // This effect runs whenever the acceleration state changes
 
     const sendMessage = () => {
         const metadata = encodeRoute('chatSend');
@@ -60,25 +92,32 @@ function ChatDemo(props) {
                 setPrompt(resp.toString());
             });
 
+            const obj = {};
+            obj['fingerprint'] = fingerprint;
+
             const requestChannelSubscription = rsocket.requestStream({
                 metadata: metadata,
-                data: Buffer.from(fingerprint)
+                data: Buffer.from(JSON.stringify(obj))
             });
             requestChannelSubscription.subscribe(consumer);
         }
     };  
     
     const startCountdown = () => {
+        chatRelease();
         if (rsocket !== null) {
             const metadata = encodeRoute('countdown');
 
             const consumer = new FlowableConsumer(resp => {
-                setCountdown(resp.toString() === '0' ? '' : resp.toString());
+                setCountdown(resp.toString() === '0' ? null : resp.toString());
             });
+
+            const obj = {};
+            obj['fingerprint'] = fingerprint;
 
             const requestChannelSubscription = rsocket.requestStream({
                 metadata: metadata,
-                data: Buffer.from(fingerprint)
+                data: Buffer.from(JSON.stringify(obj))
             });
             requestChannelSubscription.subscribe(consumer);
         }
@@ -89,6 +128,7 @@ function ChatDemo(props) {
             <p>Acceleration X: {acceleration.x.toFixed(2)}</p>
             <p>Acceleration Y: {acceleration.y.toFixed(2)}</p>
             <p>Acceleration Z: {acceleration.z.toFixed(2)}</p>
+            <p>Beta : {beta}</p>
         </>
     );
 

@@ -1,9 +1,13 @@
 package com.cabias.upwork.j1289b41f.rsocketserver.service;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import org.apache.http.HttpHeaders;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -78,6 +82,48 @@ public class YourService {
             e.printStackTrace();
         }
         return itemsList;
+    }
+    
+//    public CompletableFuture<HashMap<String, List<String>>> processMap(HashMap<String, List<String>> inputMap, HashMap<String, List<String>> outputMap) {
+//        List<CompletableFuture<HashMap<String, List<String>>>> futures = new ArrayList<>();
+//
+//        for (Map.Entry<String, List<String>> entry : inputMap.entrySet()) {
+//            CompletableFuture<HashMap<String, List<String>>> future = CompletableFuture.supplyAsync(() -> {
+//            	List<String> results = entry.getValue().stream()
+//            		    .flatMap(str -> someMethod(str).stream()) // Flatten the lists
+//            		    .collect(Collectors.toList());
+//
+//                HashMap<String, List<String>> resultMap = new HashMap<>();
+//                resultMap.put(entry.getKey(), results); // Associate the key with the cumulative list
+//                return resultMap;
+//            });
+//            futures.add(future);
+//        }
+//
+//        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+//                .thenApply(v -> {
+//                    HashMap<String, List<String>> finalResult = new HashMap<>();
+//                    futures.forEach(f -> finalResult.putAll(f.join())); // Merge all individual results
+//                    return finalResult;
+//                });
+//    }
+    
+    public void processMap(Map<String, List<String>> inputMap, Map<String, List<String>> outputMap) {
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+
+        for (Map.Entry<String, List<String>> entry : inputMap.entrySet()) {
+            CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+                List<String> results = entry.getValue().stream()
+                        .flatMap(str -> someMethod(str).stream()) // Assuming someMethod returns List<String>
+                        .collect(Collectors.toList());
+                synchronized (outputMap) {
+                	outputMap.put(entry.getKey(), results); // Mutate the output map
+                }
+            });
+            futures.add(future);
+        }
+
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join(); // Wait for all to complete
     }
 }
 

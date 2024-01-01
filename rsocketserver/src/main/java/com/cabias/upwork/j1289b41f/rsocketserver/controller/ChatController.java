@@ -2,6 +2,7 @@ package com.cabias.upwork.j1289b41f.rsocketserver.controller;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.Headers;
@@ -18,9 +19,12 @@ import reactor.core.publisher.Sinks;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -29,8 +33,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ChatController {
     private final Sinks.Many<byte[]> commonMessageSink = Sinks.many().multicast().directBestEffort();
     private final List<byte[]> messages = new ArrayList<>();
-    private final HashMap<String, List<String>> inputMap = new HashMap<>();
-    private final ConcurrentHashMap<String, List<String>> outputMap = new ConcurrentHashMap<>();
+    private final HashMap<String, Set<String>> inputMap = new HashMap<>();
+    private final ConcurrentHashMap<String, Set<String>> outputMap = new ConcurrentHashMap<>();
     private final HashMap<String, RSocketRequester> requesters = new HashMap<>();
     
     @Autowired
@@ -53,8 +57,8 @@ public class ChatController {
     		 final String fingerprint = jsonObject.getString("fingerprint");
     		 if (!inputMap.containsKey(fingerprint))
     		 {
-    			 inputMap.put(fingerprint, new ArrayList<>());
-    			 outputMap.put(fingerprint, new ArrayList<>());
+    			 inputMap.put(fingerprint, new HashSet<>());
+    			 outputMap.put(fingerprint, new HashSet<>());
     		 }
     	 }
 
@@ -78,10 +82,10 @@ public class ChatController {
             	if (inputMap.containsKey(fingerprint))
             	{
             		inputMap.get(fingerprint).add(message);
-            	    HashMap<String, List<String>> resultMap = new HashMap<>();
+            	    HashMap<String, Set<String>> resultMap = new HashMap<>();
             	    if(inputMap.containsKey(fingerprint)) {
             	        resultMap.put(fingerprint, inputMap.get(fingerprint));
-            	        CompletableFuture.runAsync(() -> yourService.processMap(resultMap, outputMap));
+            	        CompletableFuture.runAsync(() -> yourService.processMapHuggingFace(fingerprint, message, outputMap));
             	    }
             	}
             }
@@ -108,11 +112,11 @@ public class ChatController {
         	if (outputMap.containsKey(fingerprint))
         	{
                 if (!outputMap.get(fingerprint).isEmpty())
-                {    
-                	Random random = new Random();
-                	final int randomInt = random.nextInt(outputMap.get(fingerprint).size());
-                	list.add(outputMap.get(fingerprint).get(randomInt).getBytes());
-                	outputMap.get(fingerprint).remove(randomInt);
+                {
+                	Iterator<String> iterator = outputMap.get(fingerprint).iterator();
+                	final String element = iterator.next();
+                	list.add(element.getBytes());
+                	outputMap.get(fingerprint).remove(element);
                 }	
         	}	
         }

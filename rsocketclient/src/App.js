@@ -9,15 +9,12 @@ import './App.css';
 function App() {
   const [rsocket, setRSocket] = useState(null);
   const [fingerprint, setFingerprint] = useState(null);
-  const [acceleration, setAcceleration] = useState({ x: 0, y: 0, z: 0 });
-  const [beta, setBeta] = useState(null);
-
 
   return (
     <>
       <Stack className="col-md-5 mx-auto" gap={3}>
-        <Connector setBeta={newBeta => setBeta(newBeta)} beta={beta} setAcceleration={newAcceleration => setAcceleration(newAcceleration)} acceleration={acceleration} setFingerprint={newFingerprint => setFingerprint(newFingerprint)} fingerprint={fingerprint} setRSocket={newRSocket => setRSocket(newRSocket)} rsocket={rsocket}></Connector>
-        <ChatDemo beta={beta} acceleration={acceleration} fingerprint={fingerprint} rsocket={rsocket}></ChatDemo>
+        <Connector setFingerprint={newFingerprint => setFingerprint(newFingerprint)} fingerprint={fingerprint} setRSocket={newRSocket => setRSocket(newRSocket)} rsocket={rsocket}></Connector>
+        <ChatDemo fingerprint={fingerprint} rsocket={rsocket}></ChatDemo>
       </Stack>
     </>
   );

@@ -13,60 +13,17 @@ import RSocketWebSocketClient from 'rsocket-websocket-client';
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
 
 function Connector(props) {
-    const [isPermissionGranted, setIsPermissionGranted] = useState(false);
     const rsocket = props.rsocket;
     const fingerprint = props.fingerprint;
     const setRSocket = props.setRSocket;
     const setFingerprint = props.setFingerprint;
-    const setAcceleration = props.setAcceleration;
-    const setBeta = props.setBeta;
 
-    const requestPermission = () => {
-        if (typeof DeviceMotionEvent.requestPermission === 'function') {
-            DeviceMotionEvent.requestPermission()
-                .then(permissionState => {
-                    if (permissionState === 'granted') {
-                        setIsPermissionGranted(true);
-                        window.addEventListener('devicemotion', handleMotionEvent);
-                    } else {
-                        alert('Device Motion Permission Denied');
-                    }
-                })
-                .catch(console.error);
-        } else {
-            setIsPermissionGranted(true);
-            window.addEventListener('devicemotion', handleMotionEvent);
-        }
-    };
-
-    const handleMotionEvent = (event) => {
-        // const { x, y, z } = event.accelerationIncludingGravity;
-        const { x, y, z } = event.acceleration;
-        // const { alpha, beta, gamma } = event.rotationRate;
-        const beta = event.rotationRate.beta;
-
-        setAcceleration({ x, y, z });
-        setBeta(beta);
-    };
-
-    useEffect(() => {
-
-        if (isPermissionGranted) {
-            window.addEventListener('devicemotion', handleMotionEvent);
-        }
-
-        return () => {
-            if (isPermissionGranted) {
-                window.removeEventListener('devicemotion', handleMotionEvent);
-            }
-        };
-    }, []);
 
     const connect = () => {
         const visitorIdPromise = getVisitorId();
         // const wsUrl = 'ws://' + window.location.hostname + ':6565/';
         // const wsUrl = 'ws://' + window.location.hostname + ':8080/';
-        const wsUrl = 'wss://' + 'c3d0-66-186-201-150.ngrok-free.app';
+        const wsUrl = 'wss://' + '3aac-66-186-201-150.ngrok-free.app';
         // const wsUrl = 'ws://' + '34.207.91.22' + ':8080/';
 
 
@@ -174,13 +131,6 @@ function Connector(props) {
 
     return (
         <>
-        {!isPermissionGranted && (
-            <>
-                <div>
-                <button onClick={requestPermission}>Enable Motion Detection</button>
-                </div>
-            </>
-        )}
         </>
     );
 }

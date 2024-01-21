@@ -4,15 +4,16 @@ import { encodeRoute } from 'rsocket-core';
 import FlowableConsumer from '../classes/FlowableConsumer';
 
 function ChatDemo(props) {
-    const [message, setMessage] = useState('Hello everybody!');
+    const [message, setMessage] = useState('');
     const [responses, setResponses] = useState([]);
     const [prompt, setPrompt] = useState('');
     const [countdown, setCountdown] = useState(null);
+    const [isPermissionGranted, setIsPermissionGranted] = useState(false);
+    const [acceleration, setAcceleration] = useState({ x: 0, y: 0, z: 0 });
+    const [beta, setBeta] = useState(null);
 
     const rsocket = props.rsocket;
     const fingerprint = props.fingerprint;
-    const acceleration = props.acceleration;
-    const beta = props.beta;
     const lastCallTime = useRef(Date.now());
 
     const [audioUnlocked, setAudioUnlocked] = useState(false);
@@ -104,7 +105,6 @@ function ChatDemo(props) {
     };  
     
     const startCountdown = () => {
-        chatRelease();
         if (rsocket !== null) {
             const metadata = encodeRoute('countdown');
 
@@ -132,6 +132,47 @@ function ChatDemo(props) {
         </>
     );
 
+    const requestPermission = () => {
+        if (typeof DeviceMotionEvent.requestPermission === 'function') {
+            DeviceMotionEvent.requestPermission()
+                .then(permissionState => {
+                    if (permissionState === 'granted') {
+                        setIsPermissionGranted(true);
+                        window.addEventListener('devicemotion', handleMotionEvent);
+                    } else {
+                        alert('Device Motion Permission Denied');
+                    }
+                })
+                .catch(console.error);
+        } else {
+            setIsPermissionGranted(true);
+            window.addEventListener('devicemotion', handleMotionEvent);
+        }
+    };
+
+    const handleMotionEvent = (event) => {
+        // const { x, y, z } = event.accelerationIncludingGravity;
+        const { x, y, z } = event.acceleration;
+        // const { alpha, beta, gamma } = event.rotationRate;
+        const beta = event.rotationRate.beta;
+
+        setAcceleration({ x, y, z });
+        setBeta(beta);
+    };
+
+    useEffect(() => {
+
+        if (isPermissionGranted) {
+            window.addEventListener('devicemotion', handleMotionEvent);
+        }
+
+        return () => {
+            if (isPermissionGranted) {
+                window.removeEventListener('devicemotion', handleMotionEvent);
+            }
+        };
+    }, []);
+
     return (
         <Stack className="mx-auto" gap={3}>
             <audio ref={audioRef} preload="auto">
@@ -140,10 +181,13 @@ function ChatDemo(props) {
             </audio>
             {!countdown && (
             <>
-                <Form.Control type="text" value={message} onChange={(e) => setMessage(e.target.value)} />
+                <Form.Control type="text" placeholder="Write Prompts here" value={message} onChange={(e) => setMessage(e.target.value)} />
                 <Button variant="primary" onClick={() => sendMessage()} disabled={rsocket === null}>Send chat message</Button>
                 {!audioUnlocked && (
                     <button onClick={unlockAudio}>Unlock Audio</button>
+                )}
+                {!isPermissionGranted && (
+                    <button onClick={requestPermission}>Enable Motion Detection</button>
                 )}
                 <Button variant="primary" onClick={() => startCountdown()} disabled={rsocket === null}>Start Countdown!</Button>
             </>

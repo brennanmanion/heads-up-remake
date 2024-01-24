@@ -1,19 +1,18 @@
 import { useEffect, useState, useRef } from 'react';
 import { Button, Form, Stack } from 'react-bootstrap';
-import { encodeRoute } from 'rsocket-core';
-import FlowableConsumer from '../classes/FlowableConsumer';
+import axios from 'axios';
+import CountdownComponent from './CountdownComponent';
 
 function ChatDemo(props) {
     const [message, setMessage] = useState('');
-    const [responses, setResponses] = useState([]);
     const [prompt, setPrompt] = useState('');
-    const [countdown, setCountdown] = useState(null);
     const [isPermissionGranted, setIsPermissionGranted] = useState(false);
     const [acceleration, setAcceleration] = useState({ x: 0, y: 0, z: 0 });
+    const [isCounting, setIsCounting] = useState(false);
     const [beta, setBeta] = useState(null);
 
-    const rsocket = props.rsocket;
     const fingerprint = props.fingerprint;
+    const url = props.url;
     const lastCallTime = useRef(Date.now());
 
     const [audioUnlocked, setAudioUnlocked] = useState(false);
@@ -37,31 +36,16 @@ function ChatDemo(props) {
     };
 
     useEffect(() => {
-        if (rsocket !== null) {
-            const metadata = encodeRoute('chatReceive');
-
-            const consumer = new FlowableConsumer(resp => {
-                setResponses(prevResponses => [...prevResponses, resp.toString()]);
-            });
-
-            const requestChannelSubscription = rsocket.requestStream({
-                metadata: metadata
-            });
-            requestChannelSubscription.subscribe(consumer);
-        }
-    }, [rsocket]);
-
-    useEffect(() => {
         // Define the threshold for detecting downward motion
         const downwardMotionThreshold = 150; // Adjust this value based on testing
 
         const throttleInterval = 1000;
 
         // Check if the device is moving downwards
-        if (countdown && Math.abs(beta) > downwardMotionThreshold) {
+        if (isCounting && Math.abs(beta) > downwardMotionThreshold) {
             const now = Date.now();
             if (now - lastCallTime.current > throttleInterval) {
-                chatRelease(); // Call your server function
+                chatRelease(axios, fingerprint); // Call your server function
                 if (audioUnlocked)
                 {
                     playAudio();
@@ -69,58 +53,29 @@ function ChatDemo(props) {
                 lastCallTime.current = now; // Update the last call time
             }
         }
-    }, [rsocket, acceleration, audioUnlocked, playAudio]); // This effect runs whenever the acceleration state changes
+    }, [acceleration, audioUnlocked, playAudio, axios, fingerprint]); // This effect runs whenever the acceleration state changes
 
     const sendMessage = () => {
-        const metadata = encodeRoute('chatSend');
-
-        const obj = {};
-        obj['message'] = message;
-        obj['fingerprint'] = fingerprint;
-
-        rsocket.fireAndForget({
-            data: Buffer.from(JSON.stringify(obj)),
-            metadata: metadata
-        });
+        const postUrl = `${url}/api/fingerprint`;
+        const data = {};
+        data['message'] = message;
+        data['fingerprint'] = fingerprint;
         setMessage('');
+        console.log(data);
+        axios.post(postUrl, data);
     };
 
-    const chatRelease = () => {
-        if (rsocket !== null) {
-            const metadata = encodeRoute('chatRelease');
-
-            const consumer = new FlowableConsumer(resp => {
-                setPrompt(resp.toString());
-            });
-
-            const obj = {};
-            obj['fingerprint'] = fingerprint;
-
-            const requestChannelSubscription = rsocket.requestStream({
-                metadata: metadata,
-                data: Buffer.from(JSON.stringify(obj))
-            });
-            requestChannelSubscription.subscribe(consumer);
+    const chatRelease = async (axios, fingerprint) => {
+        const getUrl = `${url}/api/fingerprint/${fingerprint}`;
+        const resp = await axios.get(getUrl);
+        if (resp)
+        {
+            setPrompt(resp.data.response);
         }
     };  
     
     const startCountdown = () => {
-        if (rsocket !== null) {
-            const metadata = encodeRoute('countdown');
-
-            const consumer = new FlowableConsumer(resp => {
-                setCountdown(resp.toString() === '0' ? null : resp.toString());
-            });
-
-            const obj = {};
-            obj['fingerprint'] = fingerprint;
-
-            const requestChannelSubscription = rsocket.requestStream({
-                metadata: metadata,
-                data: Buffer.from(JSON.stringify(obj))
-            });
-            requestChannelSubscription.subscribe(consumer);
-        }
+        setIsCounting(true);
     };  
 
     const panelAcceleration = (
@@ -171,7 +126,7 @@ function ChatDemo(props) {
                 window.removeEventListener('devicemotion', handleMotionEvent);
             }
         };
-    }, []);
+    }, [axios]);
 
     return (
         <Stack className="mx-auto" gap={3}>
@@ -179,20 +134,22 @@ function ChatDemo(props) {
             <source src="https://cdn.pixabay.com/audio/2022/03/10/audio_8cdc56bad0.mp3" type="audio/mpeg" />
             Your browser does not support the audio element.
             </audio>
-            {!countdown && (
+            {!isCounting && (
             <>
                 <Form.Control type="text" placeholder="Write Prompts here" value={message} onChange={(e) => setMessage(e.target.value)} />
-                <Button variant="primary" onClick={() => sendMessage()} disabled={rsocket === null}>Send chat message</Button>
+                <Button variant="primary" onClick={() => sendMessage()}>Send chat message</Button>
                 {!audioUnlocked && (
                     <button onClick={unlockAudio}>Unlock Audio</button>
                 )}
                 {!isPermissionGranted && (
                     <button onClick={requestPermission}>Enable Motion Detection</button>
                 )}
-                <Button variant="primary" onClick={() => startCountdown()} disabled={rsocket === null}>Start Countdown!</Button>
+                <Button variant="primary" onClick={() => startCountdown()}>{prompt.length === 0 ? 'Fetching Prompts' : 'Start Countdown!'}</Button>
             </>
             )}
-            <h1>{countdown}</h1>
+            {isCounting && (
+                <CountdownComponent setIsCounting={isCounting => setIsCounting(isCounting)}></CountdownComponent>
+            )}
             <h1 style={{ width: '100%', fontSize: '10vw' }}>{prompt}</h1>
         </Stack>
     );

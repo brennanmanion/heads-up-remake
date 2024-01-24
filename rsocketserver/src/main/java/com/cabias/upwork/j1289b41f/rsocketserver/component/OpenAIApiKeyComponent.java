@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 @Component
 public class OpenAIApiKeyComponent {
 
-    @Value("${openai.apikey}")
+//    @Value("${openai.apikey}")
     private String apiKey;
 
     public String getApiKey() {

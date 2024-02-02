@@ -5,7 +5,7 @@ import Connector from './components/Connector';
 import './App.css';
 
 function App() {
-  const url = 'https://31e1-66-186-201-150.ngrok-free.app';
+  const url = 'https://cbd2-71-205-171-144.ngrok-free.app';
   const [fingerprint, setFingerprint] = useState(null);
 
   return (

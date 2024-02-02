@@ -4,12 +4,15 @@ import java.io.UnsupportedEncodingException;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.http.HttpHeaders;
@@ -52,6 +55,7 @@ public class YourService {
                         // Make a thread-safe copy to modify
                         existingSet = new CopyOnWriteArraySet<>(existingSet);
                     }
+                    System.out.println(prompts);
                     existingSet.addAll(prompts);
                     return existingSet; // Mutate the output map
                 });
@@ -64,13 +68,26 @@ public class YourService {
     @Async
     public List<String> getHuggingFacePrompts(final String input)
     {
-    	final List<String> list = new ArrayList<>();
+    	final Set<String> set = new HashSet<>();
     	final String resp = query(input);
     	if (resp != null)
     	{
-    		list.addAll(Arrays.asList(resp.split(",")));
+    		// ([a-zA-Z]+(?:\s[a-zA-Z]+)*,)+
+    		final Pattern pattern = Pattern.compile("([a-zA-Z]+(?:\\s[a-zA-Z]+){0,2})(?:,\\s)", Pattern.MULTILINE);
+    		Matcher matcher = pattern.matcher(resp);
+            
+            while (matcher.find()) {
+                // Group 0 is the entire match, groups 1, 2, ... are the subgroups in the match
+                for (int i = 1; i <= matcher.groupCount(); i++) {
+                	final String match = matcher.group(i);
+                	if (match != null)
+                	{
+                		set.add(match.trim());	
+                	}
+                }
+            }
     	}
-    	return list;
+    	return new ArrayList<>(set);
     }
     
     public String query(final String input) {
@@ -79,28 +96,8 @@ public class YourService {
         String apiToken = "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";
         final JSONObject payload = new JSONObject();
         
-        
-//        payload.put("inputs", "<|system|>"
-//        		+ "Given an input term, generate a comprehensive list of related concepts, practices, historical events, key terminology, and influential entities. Focus on aspects that are directly associated with the term, providing insights into its broader context and implications. Consider various dimensions such as historical significance, industry practices, technical terminology, and notable examples or cases. Aim to create a list that encompasses the diversity and depth of the ecosystem surrounding the input term. Aim to not re-use the input term in any of the items in the list. Provide the information in a structured, comma-separated list for easy parsing. These items should be one word ideally, and a few at the very most. Make sure the responses are fun and not depressing or antagonizing.</s>"
-//        		+ "Upon receiving an input term, produce a detailed, comma-separated list of related elements. This list should encompass a wide array of categories pertinent to the term, reflecting its multifaceted nature and the ecosystem it resides in. Focus on direct associations that offer insights into its broader context and implications. Aim for a concise representation of each item, ideally one word or a few words at most, to ensure clarity and ease of parsing. Consider the following categories as they apply: Technological Innovations: Key inventions, trends. Artistic Movements or Styles: Influential artists, defining works. Historical Periods or Events: Significant dates, figures, outcomes. Scientific Concepts or Theories: Foundational principles, major discoveries. Economic Theories or Models: Influential economists, fundamental principles. Philosophical Ideologies: Key philosophers, seminal works. Environmental Ecosystems: Characteristic flora and fauna, climate features. Culinary Techniques or Cuisines: Essential dishes, cooking methods. Legal Principles or Cases: Landmark cases, fundamental concepts. Health and Medicine: Diseases, treatments, medical breakthroughs. Sports and Recreation: Important games, athletes, rules. Fashion and Design: Influential designers, style eras. Mythology and Folklore: Significant myths, characters, symbols. Languages and Dialects: Key phrases, linguistic features. Transportation and Vehicles: Modes of transport, historical developments. Each entry should reflect the term's historical significance, industry practices, technical terminology, and notable examples or cases. Strive to provide a balanced representation that captures the diversity and depth of the term's various dimensions and implications. Provide the information in a structured, comma-separated list for easy parsing. These items should be one word ideally, and a few at the very most. Make sure the responses are fun and not depressing or antagonizing"
-//        		+ "<|user|>"
-//        		+ input + "</s>"
-//        		+ "<|assistant|>");
-        
-//        payload.put("inputs", "<|system|>\n"
-//        		+ "Given an input term, generate a comprehensive list of related concepts, practices, historical events, key terminology, and influential entities. Consider various dimensions such as historical significance, industry practices, technical terminology, and notable examples or cases. Aim to create a list that encompasses the diversity and depth of the ecosystem surrounding the input term. Provide the information in a structured, comma-separated list for easy parsing. These items should be one word ideally, and a few at the very most. Do not describe them in parenthesis. Do not re-use the user input in any of the terms included in the list.</s>\n"
-//        		+ "<|user|>\n"
-//        		+ input + "</s>\n"
-//        		+ "<|assistant|>\n");
-        
-//        payload.put("inputs", "<|system|>\n"
-//        		+ "Given an input term, generate a comprehensive list of related terms. Aim to create a list that encompasses the diversity and depth of the ecosystem surrounding the input term. Also aim to answer the prompt directly. Provide the information in a structured, comma-separated list for easy parsing. These items should be one word ideally, and a few at the very most.</s>\n"
-//        		+ "<|user|>\n"
-//        		+ input + "</s>\n"
-//        		+ "<|assistant|>");
-        
-        // 
-        payload.put("inputs", "<|system|>You are a comma separated text generator creating words or phrases that are in the same space of the input. Make sure the response is only a list of words and phrases separated by commas. The list items should constitute a complete aspect of the category of the input phrase. Get specific and include diversity in the individual items in the list. These should be real world names, places, sayings, events, concepts, practices, terminology, influential entities, and notable aspects within the category. The list items should include not just names or basic elements, but be diverse in the broader context of the input. Focus on contextually relevant examples that go beyond the obvious, including practices, jargon, tools, techniques, or influential elements related to the category. Ensure richness and specificity in your list, reflecting a deep understanding of the subject matter. The list items should be lower level and granular. Aim to be specific items over categories. Avoid general or overarching categories, and instead, delve into the nuanced, specific, and contextually relevant aspects of the theme. Each item should illustrate a comprehensive and distinct example within the broader context of the input. Each item should be a prominent and widely recognized example, ensuring the list captures the essence of the category in its most general and universally accepted form. Here is the example structure of the comma separated list `A,B,C`. No item in the list should contain the user's input string."
+        payload.put("inputs", "<|system|>You are a catch phrase generator. Your response should be a list of phrases of one to three words separated by commas. Your list will be split using commas as delimiter. The list items should constitute a complete aspect of the category of the input phrase. Get specific and include diversity in the individual items in the list. These should be real world names, places, sayings, events, concepts, practices, terminology, influential entities, and notable aspects within the category. The list items should include not just names or basic elements, but be diverse in the broader context of the input. Focus on contextually relevant examples that go beyond the obvious, including practices, jargon, tools, techniques, or influential elements related to the category. Ensure richness and specificity in your list, reflecting a deep understanding of the subject matter. The list items should be lower level and granular. Aim to be specific items over categories. Avoid general or overarching categories, and instead, delve into the nuanced, specific, and contextually relevant aspects of the theme. Each item should illustrate a comprehensive and distinct example within the broader context of the input. Each item should be a prominent and widely recognized example, ensuring the list captures the essence of the category in its most general and universally accepted form.</s>"
+//        payload.put("inputs", "<|system|>You are a comma separated text generator creating words or phrases that are in the same space of the input. Make sure the response is only a list of words and phrases separated by commas. The list items should constitute a complete aspect of the category of the input phrase. Get specific and include diversity in the individual items in the list. These should be real world names, places, sayings, events, concepts, practices, terminology, influential entities, and notable aspects within the category. The list items should include not just names or basic elements, but be diverse in the broader context of the input. Focus on contextually relevant examples that go beyond the obvious, including practices, jargon, tools, techniques, or influential elements related to the category. Ensure richness and specificity in your list, reflecting a deep understanding of the subject matter. The list items should be lower level and granular. Aim to be specific items over categories. Avoid general or overarching categories, and instead, delve into the nuanced, specific, and contextually relevant aspects of the theme. Each item should illustrate a comprehensive and distinct example within the broader context of the input. Each item should be a prominent and widely recognized example, ensuring the list captures the essence of the category in its most general and universally accepted form. Here is the example structure of the comma separated list `A,B,C`. No item in the list should contain the user's input string."
         		+ "<|user|>"
         		+ input + "</s>"
         		+ "<|assistant|>");

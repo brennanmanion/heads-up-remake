@@ -5,6 +5,29 @@ const CountdownComponent = (props) => {
     const [count, setCount] = useState(90); // Initialize count to 90
 
     useEffect(() => {
+        let wakeLock = null;
+
+        const requestWakeLock = async () => {
+            try {
+                wakeLock = await navigator.wakeLock.request('screen');
+                wakeLock.addEventListener('release', () => {
+                    console.log('Screen Wake Lock was released');
+                });
+                console.log('Screen Wake Lock is active');
+            } catch (err) {
+                console.error(`${err.name}, ${err.message}`);
+            }
+        };
+
+        requestWakeLock();
+
+        return () => {
+            wakeLock && wakeLock.release();
+            wakeLock = null;
+        };
+    }, []);    
+
+    useEffect(() => {
     // Set up the interval
     const interval = setInterval(() => {
         setCount((currentCount) => {

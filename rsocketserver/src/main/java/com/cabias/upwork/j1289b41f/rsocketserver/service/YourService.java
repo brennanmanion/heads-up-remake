@@ -73,19 +73,23 @@ public class YourService {
     	if (resp != null)
     	{
     		// ([a-zA-Z]+(?:\s[a-zA-Z]+)*,)+
-    		final Pattern pattern = Pattern.compile("([a-zA-Z]+(?:\\s[a-zA-Z]+){0,2})(?:,\\s)", Pattern.MULTILINE);
-    		Matcher matcher = pattern.matcher(resp);
-            
-            while (matcher.find()) {
-                // Group 0 is the entire match, groups 1, 2, ... are the subgroups in the match
-                for (int i = 1; i <= matcher.groupCount(); i++) {
-                	final String match = matcher.group(i);
-                	if (match != null)
-                	{
-                		set.add(match.trim());	
-                	}
-                }
-            }
+//    		final Pattern pattern = Pattern.compile("([a-zA-Z]+(?:\\s[a-zA-Z]+){0,2})(?:,\\s)", Pattern.MULTILINE);
+//    		Matcher matcher = pattern.matcher(resp);
+//            
+//            while (matcher.find()) {
+//                // Group 0 is the entire match, groups 1, 2, ... are the subgroups in the match
+//                for (int i = 1; i <= matcher.groupCount(); i++) {
+//                	final String match = matcher.group(i);
+//                	if (match != null)
+//                	{
+//                		set.add(match.trim());	
+//                	}
+//                }
+//            }
+    		for(final String item : resp.replaceAll("\"", "").split(","))
+    		{
+    			set.add(item.trim());
+    		}
     	}
     	return new ArrayList<>(set);
     }
@@ -96,8 +100,8 @@ public class YourService {
         String apiToken = "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";
         final JSONObject payload = new JSONObject();
         
-        payload.put("inputs", "<|system|>You are a catch phrase generator. Your response should be a list of phrases of one to three words separated by commas. Your list will be split using commas as delimiter. The list items should constitute a complete aspect of the category of the input phrase. Get specific and include diversity in the individual items in the list. These should be real world names, places, sayings, events, concepts, practices, terminology, influential entities, and notable aspects within the category. The list items should include not just names or basic elements, but be diverse in the broader context of the input. Focus on contextually relevant examples that go beyond the obvious, including practices, jargon, tools, techniques, or influential elements related to the category. Ensure richness and specificity in your list, reflecting a deep understanding of the subject matter. The list items should be lower level and granular. Aim to be specific items over categories. Avoid general or overarching categories, and instead, delve into the nuanced, specific, and contextually relevant aspects of the theme. Each item should illustrate a comprehensive and distinct example within the broader context of the input. Each item should be a prominent and widely recognized example, ensuring the list captures the essence of the category in its most general and universally accepted form.</s>"
-//        payload.put("inputs", "<|system|>You are a comma separated text generator creating words or phrases that are in the same space of the input. Make sure the response is only a list of words and phrases separated by commas. The list items should constitute a complete aspect of the category of the input phrase. Get specific and include diversity in the individual items in the list. These should be real world names, places, sayings, events, concepts, practices, terminology, influential entities, and notable aspects within the category. The list items should include not just names or basic elements, but be diverse in the broader context of the input. Focus on contextually relevant examples that go beyond the obvious, including practices, jargon, tools, techniques, or influential elements related to the category. Ensure richness and specificity in your list, reflecting a deep understanding of the subject matter. The list items should be lower level and granular. Aim to be specific items over categories. Avoid general or overarching categories, and instead, delve into the nuanced, specific, and contextually relevant aspects of the theme. Each item should illustrate a comprehensive and distinct example within the broader context of the input. Each item should be a prominent and widely recognized example, ensuring the list captures the essence of the category in its most general and universally accepted form. Here is the example structure of the comma separated list `A,B,C`. No item in the list should contain the user's input string."
+//        payload.put("inputs", "<|system|>You are a catch phrase generator. Your response should be a list of phrases of one to three words separated by commas. Your list will be split using commas as delimiter. The list items should constitute a complete aspect of the category of the input phrase. Get specific and include diversity in the individual items in the list. These should be real world names, places, sayings, events, concepts, practices, terminology, influential entities, and notable aspects within the category. The list items should include not just names or basic elements, but be diverse in the broader context of the input. Focus on contextually relevant examples that go beyond the obvious, including practices, jargon, tools, techniques, or influential elements related to the category. Ensure richness and specificity in your list, reflecting a deep understanding of the subject matter. The list items should be lower level and granular. Aim to be specific items over categories. Avoid general or overarching categories, and instead, delve into the nuanced, specific, and contextually relevant aspects of the theme. Each item should illustrate a comprehensive and distinct example within the broader context of the input. Each item should be a prominent and widely recognized example, ensuring the list captures the essence of the category in its most general and universally accepted form.</s>"
+        payload.put("inputs", "<|system|>You are a catch phrase generator. Your response should be a list of phrases of one to three words separated by commas. Your list will be split using commas as delimiter. Get specific and include diversity in the individual items in the list. These should be real world names, places, sayings, events, concepts, practices, terminology, influential entities, and notable aspects within the category. Avoid general or overarching categories, and instead, delve into the nuanced, specific, and contextually relevant aspects of the theme. Each item should be a prominent and widely recognized example, ensuring the list captures the essence of the category in its most general and universally accepted form.</s>"
         		+ "<|user|>"
         		+ input + "</s>"
         		+ "<|assistant|>");

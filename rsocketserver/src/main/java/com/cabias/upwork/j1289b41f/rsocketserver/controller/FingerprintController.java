@@ -21,7 +21,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@CrossOrigin(origins = "https://fbb8-71-205-171-144.ngrok-free.app")
+@CrossOrigin(origins = "https://f38b-66-186-201-150.ngrok-free.app")
 @RestController
 @RequestMapping("/api/fingerprint")
 public class FingerprintController {
@@ -43,7 +43,7 @@ public class FingerprintController {
     @PostMapping
     @Consumes(MediaType.APPLICATION_JSON)
     public ResponseEntity<?> createFingerprintMessage(@RequestBody ChatSendModel chatSendModel) {
-    	System.out.println(chatSendModel != null ? chatSendModel.getMessage() : null);
+    	System.out.println(chatSendModel != null ? ("message: " + chatSendModel.getMessage()): null);
     	CompletableFuture.runAsync(() -> yourService.processMapHuggingFace(chatSendModel, outputMap));
     	return ResponseEntity.ok().build();
     }

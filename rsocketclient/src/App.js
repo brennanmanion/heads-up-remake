@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Stack, Tab, Tabs } from 'react-bootstrap';
+import { Stack} from 'react-bootstrap';
 import ChatDemo from './components/ChatDemo';
 import Connector from './components/Connector';
 import './App.css';
 
 function App() {
-  const url = 'https://cbd2-71-205-171-144.ngrok-free.app';
+  const url = 'https://77e4-66-186-201-150.ngrok-free.app';
   const [fingerprint, setFingerprint] = useState(null);
 
   return (

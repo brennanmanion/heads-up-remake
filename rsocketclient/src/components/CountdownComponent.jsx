@@ -4,13 +4,12 @@ const CountdownComponent = (props) => {
     const setIsCounting = props.setIsCounting;
     const timeOriginal = new Date().getTime();
     const [count, setCount] = useState(90); // Initialize count to 90
-    // alert(timeOriginal);
+    
     useEffect(() => {
     // Set up the interval
     const interval = setInterval(() => {
         setCount(() => {
             const timeElapsed = Math.floor((new Date().getTime() - timeOriginal)/1000);
-            // alert(timeElapsed);
             if (timeElapsed < count) {
                 return count - timeElapsed; // Reduce count by one
             } else {

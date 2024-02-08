@@ -148,7 +148,7 @@ function ChatDemo(props) {
             </>
             )}
             {isCounting && (
-                <CountdownComponent setIsCounting={isCounting => setIsCounting(isCounting)}></CountdownComponent>
+                <CountdownComponent setPrompt={prompt => setPrompt(prompt)} setIsCounting={isCounting => setIsCounting(isCounting)}></CountdownComponent>
             )}
             <h1 style={{ width: '100%', fontSize: '10vw' }}>{prompt}</h1>
         </Stack>

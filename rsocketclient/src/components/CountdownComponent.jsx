@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 const CountdownComponent = (props) => {
     const setIsCounting = props.setIsCounting;
+    const setPrompt = props.setPrompt;
     const [count, setCount] = useState(90); // Initialize count to 90
 
     useEffect(() => {
@@ -36,6 +37,7 @@ const CountdownComponent = (props) => {
             } else {
                 clearInterval(interval); // Clear interval if count reaches 0
                 setIsCounting(false);
+                setPrompt('');
                 return 0; // Set count to 0
             }
         });

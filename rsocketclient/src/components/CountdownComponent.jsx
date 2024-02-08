@@ -3,8 +3,9 @@ import React, { useState, useEffect } from 'react';
 const CountdownComponent = (props) => {
     const setIsCounting = props.setIsCounting;
     const setPrompt = props.setPrompt;
+    const timeOriginal = new Date().getTime();
     const [count, setCount] = useState(90); // Initialize count to 90
-
+    
     useEffect(() => {
         let wakeLock = null;
 
@@ -31,9 +32,10 @@ const CountdownComponent = (props) => {
     useEffect(() => {
     // Set up the interval
     const interval = setInterval(() => {
-        setCount((currentCount) => {
-            if (currentCount > 0) {
-                return currentCount - 1; // Reduce count by one
+        setCount(() => {
+            const timeElapsed = Math.floor((new Date().getTime() - timeOriginal)/1000);
+            if (timeElapsed < count) {
+                return count - timeElapsed; // Reduce count by one
             } else {
                 clearInterval(interval); // Clear interval if count reaches 0
                 setIsCounting(false);

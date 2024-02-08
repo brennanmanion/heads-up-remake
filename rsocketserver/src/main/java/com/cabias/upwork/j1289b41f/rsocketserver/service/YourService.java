@@ -40,64 +40,99 @@ public class YourService {
 //    public YourService(OpenAIApiKeyComponent apiKeyComponent) {
 //        this.apiKeyComponent = apiKeyComponent;
 //    }
+	private final String system1 = "You are a catch phrase generator. Your response should be a list of phrases of one to three words separated by commas. Your list will be split using commas as delimiter. Avoid using adjectives or the user input in any of the phrases unless they are a fundamental piece of the phrase. Get specific and include diversity in the individual items in the list. These should be real world names, places, sayings, events, concepts, practices, terminology, influential entities, and notable aspects within the category. Avoid general or overarching categories, and instead, delve into the nuanced, specific, and contextually relevant aspects of the theme. Each item should be a prominent and widely recognized example, ensuring the list captures the essence of the category in its most general and universally accepted form.";
+	private final String system2 = "You are a catch phrase generator. Your response should be a list of phrases of one to three words separated by commas. Your list will be split using commas as delimiter. Get specific and include diversity in the individual items in the list. The phrases must have distinct entity level, rather than general or broad categories. These should be real world names, places, sayings, events, concepts, practices, terminology, influential entities, and notable aspects within the category. Avoid general or overarching categories, and instead, delve into the nuanced, specific, and contextually relevant aspects of the theme. Each item should be a prominent and widely recognized example, ensuring the list captures the essence of the category in its most general and universally accepted form.";
 	
     public void processMapHuggingFace(ChatSendModel chatSendModel, ConcurrentHashMap<String, Set<String>> outputMap) {
     	if (chatSendModel != null && chatSendModel.getFingerprint() != null && chatSendModel.getMessage() != null && !chatSendModel.getMessage().isEmpty())
     	{
     		final String fingerprint = chatSendModel.getFingerprint();
     		final String message = chatSendModel.getMessage();
-            CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-                final List<String> prompts = getHuggingFacePrompts(message);
-                outputMap.compute(fingerprint, (key, existingSet) -> {
-                    if (existingSet == null) {
-                        existingSet = new CopyOnWriteArraySet<>();
-                    } else {
-                        // Make a thread-safe copy to modify
-                        existingSet = new CopyOnWriteArraySet<>(existingSet);
-                    }
-                    System.out.println(prompts);
-                    existingSet.addAll(prompts);
-                    return existingSet; // Mutate the output map
-                });
-            });
+    		CompletableFuture<Set<String>> future1 = CompletableFuture.supplyAsync(() -> {
+    		    return new HashSet<>(getHuggingFacePrompts(message, system1));
+    		});
 
-            future.join(); // Wait for the operation to complete	
+    		CompletableFuture<Set<String>> future2 = CompletableFuture.supplyAsync(() -> {
+    		    return new HashSet<>(getHuggingFacePrompts(message, system2));
+    		});
+
+    		CompletableFuture<Void> combinedFuture = future1.thenCombine(future2, (set1, set2) -> {
+    		    Set<String> prompts = new HashSet<>();
+    		    prompts.addAll(set1);
+    		    prompts.addAll(set2);
+    		    return prompts;
+    		}).thenAccept((prompts) -> {
+    		    outputMap.compute(fingerprint, (key, existingSet) -> {
+    		        if (existingSet == null) {
+    		            existingSet = new CopyOnWriteArraySet<>();
+    		        } else {
+    		            // Make a thread-safe copy to modify
+    		            existingSet = new CopyOnWriteArraySet<>(existingSet);
+    		        }
+    		        System.out.println("prompts : " + prompts);
+    		        existingSet.addAll(prompts);
+    		        return existingSet; // Mutate the output map
+    		    });
+    		});
+
+    		combinedFuture.join(); // Wait for the operation to complete
+
     	}
     } 
 	
     @Async
-    public List<String> getHuggingFacePrompts(final String input)
+    public List<String> getHuggingFacePrompts(final String input, final String system)
     {
     	final Set<String> set = new HashSet<>();
-    	final String resp = query(input);
+    	final String resp = query(input, system);
     	if (resp != null)
     	{
-    		// ([a-zA-Z]+(?:\s[a-zA-Z]+)*,)+
-    		final Pattern pattern = Pattern.compile("([a-zA-Z]+(?:\\s[a-zA-Z]+){0,2})(?:,\\s)", Pattern.MULTILINE);
-    		Matcher matcher = pattern.matcher(resp);
-            
-            while (matcher.find()) {
-                // Group 0 is the entire match, groups 1, 2, ... are the subgroups in the match
-                for (int i = 1; i <= matcher.groupCount(); i++) {
-                	final String match = matcher.group(i);
-                	if (match != null)
-                	{
-                		set.add(match.trim());	
-                	}
-                }
-            }
+    		final Pattern pattern1 = Pattern.compile("([a-zA-Z]+(?:\\s[a-zA-Z]+){0,2})(?:,\\s)", Pattern.MULTILINE);
+    		Matcher matcher1 = pattern1.matcher(resp);
+            final Pattern pattern2 = Pattern.compile("(\\b\\w+)(?:\\s+\\w+)");
+            Matcher matcher2;
+			while(matcher1.find())
+			{
+              for (int i = 1; i <= matcher1.groupCount(); i++) {
+            	final String match = matcher1.group(i);
+            	if (match != null)
+            	{
+            		matcher2 = pattern2.matcher(match);
+            		addItemToSet(set, input, match, matcher2);	
+            	}
+              }
+			}
+			if (set.isEmpty())
+			{
+	    		for(final String item : resp.replaceAll("\"", "").split(","))
+	    		{
+	    			matcher2 = pattern2.matcher(item);
+	    			addItemToSet(set, input, item, matcher2);
+	    		}	
+			}
     	}
+    	System.out.println("clean : " + set);
     	return new ArrayList<>(set);
     }
     
-    public String query(final String input) {
+    public void addItemToSet(final Set<String> set, final String input, final String item, final Matcher matcher)
+    {
+		if (item.isEmpty() || item.isBlank() || item.contains(input) || (matcher.find() && input.contains(matcher.group(1))))
+		{
+			return;
+		}
+		set.add(item.trim());
+    }
+    
+    public String query(final String input, final String system) {
         
         String modelId = "HuggingFaceH4/zephyr-7b-beta";
         String apiToken = "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";
         final JSONObject payload = new JSONObject();
         
-        payload.put("inputs", "<|system|>You are a catch phrase generator. Your response should be a list of phrases of one to three words separated by commas. Your list will be split using commas as delimiter. The list items should constitute a complete aspect of the category of the input phrase. Get specific and include diversity in the individual items in the list. These should be real world names, places, sayings, events, concepts, practices, terminology, influential entities, and notable aspects within the category. The list items should include not just names or basic elements, but be diverse in the broader context of the input. Focus on contextually relevant examples that go beyond the obvious, including practices, jargon, tools, techniques, or influential elements related to the category. Ensure richness and specificity in your list, reflecting a deep understanding of the subject matter. The list items should be lower level and granular. Aim to be specific items over categories. Avoid general or overarching categories, and instead, delve into the nuanced, specific, and contextually relevant aspects of the theme. Each item should illustrate a comprehensive and distinct example within the broader context of the input. Each item should be a prominent and widely recognized example, ensuring the list captures the essence of the category in its most general and universally accepted form.</s>"
-//        payload.put("inputs", "<|system|>You are a comma separated text generator creating words or phrases that are in the same space of the input. Make sure the response is only a list of words and phrases separated by commas. The list items should constitute a complete aspect of the category of the input phrase. Get specific and include diversity in the individual items in the list. These should be real world names, places, sayings, events, concepts, practices, terminology, influential entities, and notable aspects within the category. The list items should include not just names or basic elements, but be diverse in the broader context of the input. Focus on contextually relevant examples that go beyond the obvious, including practices, jargon, tools, techniques, or influential elements related to the category. Ensure richness and specificity in your list, reflecting a deep understanding of the subject matter. The list items should be lower level and granular. Aim to be specific items over categories. Avoid general or overarching categories, and instead, delve into the nuanced, specific, and contextually relevant aspects of the theme. Each item should illustrate a comprehensive and distinct example within the broader context of the input. Each item should be a prominent and widely recognized example, ensuring the list captures the essence of the category in its most general and universally accepted form. Here is the example structure of the comma separated list `A,B,C`. No item in the list should contain the user's input string."
+        payload.put("inputs", "<|system|>" + system + "</s>"
+//        payload.put("inputs", "<|system|>You are a catch phrase generator. Your response should be a list of phrases of one to three words separated by commas. Your list will be split using commas as delimiter. Avoid using adjectives or the user input in any of the phrases unless they are a fundamental piece of the phrase. Get specific and include diversity in the individual items in the list. These should be real world names, places, sayings, events, concepts, practices, terminology, influential entities, and notable aspects within the category. Avoid general or overarching categories, and instead, delve into the nuanced, specific, and contextually relevant aspects of the theme. Each item should be a prominent and widely recognized example, ensuring the list captures the essence of the category in its most general and universally accepted form.</s>"
+//        payload.put("inputs", "<|system|>You are a catch phrase generator. Your response should be a list of phrases of one to three words separated by commas. Your list will be split using commas as delimiter. Get specific and include diversity in the individual items in the list. The phrases must have distinct entity level, rather than general or broad categories. These should be real world names, places, sayings, events, concepts, practices, terminology, influential entities, and notable aspects within the category. Avoid general or overarching categories, and instead, delve into the nuanced, specific, and contextually relevant aspects of the theme. Each item should be a prominent and widely recognized example, ensuring the list captures the essence of the category in its most general and universally accepted form.</s>"
         		+ "<|user|>"
         		+ input + "</s>"
         		+ "<|assistant|>");

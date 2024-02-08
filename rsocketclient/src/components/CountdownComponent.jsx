@@ -25,7 +25,7 @@ const CountdownComponent = (props) => {
     return () => {
         clearInterval(interval);
     };
-    }, [count, setIsCounting, timeOriginal]); // Empty dependency array means the effect runs once on mount
+    }, []); // Empty dependency array means the effect runs once on mount
 
     return (
         <div>

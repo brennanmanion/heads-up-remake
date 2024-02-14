@@ -30,7 +30,7 @@ function ChatDemo(props) {
     };
 
     const playAudio = () => {
-        if (audioUnlocked && audioRef.current) {
+        if (audioUnlocked && audioRef.current && isCounting) {
             audioRef.current.play().catch(error => console.log('Error playing the audio:', error));
         }
     };
@@ -144,7 +144,7 @@ function ChatDemo(props) {
                 {!isPermissionGranted && (
                     <button onClick={requestPermission}>Enable Motion Detection</button>
                 )}
-                <Button variant="primary" onClick={() => startCountdown()}>{prompt.length === 0 ? 'Fetching Prompts' : 'Start Countdown!'}</Button>
+                <Button variant={audioUnlocked && isPermissionGranted ? "success" : "danger"} onClick={() => startCountdown()}>{audioUnlocked && isPermissionGranted ? "Start Countdown!" : "Grant Permissions!"}</Button>
             </>
             )}
             {isCounting && (

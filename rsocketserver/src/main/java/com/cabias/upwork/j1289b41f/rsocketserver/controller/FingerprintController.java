@@ -21,7 +21,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@CrossOrigin(origins = "https://f38b-66-186-201-150.ngrok-free.app")
+@CrossOrigin(origins = "https://c2b3-2600-100e-b036-a24f-6c23-b635-a73b-a77f.ngrok-free.app")
 @RestController
 @RequestMapping("/api/fingerprint")
 public class FingerprintController {
